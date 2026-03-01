@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "coco-b"
+version = "1.0.0"
+description = "coco B — AI assistant with persistent memory"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+dependencies = [
+    "flask>=3.0.0",
+    "requests>=2.31.0",
+    "aiohttp>=3.9.1",
+    "PyYAML>=6.0.0",
+    "psutil>=5.9.0",
+    "httpx>=0.26.0",
+    "APScheduler>=3.10.0",
+]
+
+[project.optional-dependencies]
+gradio = ["gradio>=6.0.0"]
+telegram = ["python-telegram-bot>=21.0"]
+discord = ["discord.py>=2.3.0"]
+slack = ["slack-bolt>=1.18.0", "slack-sdk>=3.27.0"]
+teams = ["botbuilder-core>=4.15.0", "botbuilder-schema>=4.15.0", "flask-limiter>=3.0.0"]
+memory = ["chromadb>=0.4.0"]
+whatsapp = ["qrcode[pil]>=7.4.2"]
+ui = ["flet>=0.27.0"]
+all = ["coco-b[gradio,telegram,discord,slack,teams,memory,whatsapp,ui]"]
+dev = ["pytest>=7.0", "pytest-asyncio>=0.21"]
+
+[project.scripts]
+coco-b = "coco_b.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

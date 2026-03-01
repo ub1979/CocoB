@@ -1,0 +1,42 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+dist/
+build/
+.pytest_cache/
+
+# Data (mounted as volume instead)
+data/
+*.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Node (WhatsApp service has its own Dockerfile)
+node_modules/
+whatsapp_service/node_modules/
+whatsapp_service/auth/
+
+# Docs and tests (not needed in image)
+docs/
+tests/
+scripts/
+*.md
+!skills/**/SKILL.md
+
+# Config (mounted as volume)
+config.py
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,109 @@
+# =============================================================================
+# docker-compose.yml — coco B AI Assistant
+# =============================================================================
+# Usage:
+#   docker compose up              # Start Gradio UI (default)
+#   docker compose up telegram     # Start Telegram bot
+#   docker compose up discord      # Start Discord bot
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Gradio Web UI (default)
+  # ---------------------------------------------------------------------------
+  gradio:
+    build: .
+    command: ["gradio"]
+    ports:
+      - "7777:7777"
+    volumes:
+      - ./data:/app/data
+      - ./config.py:/app/config.py:ro
+      - ./skills:/app/skills
+      - ./mcp_config.json:/app/mcp_config.json:ro
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Telegram Bot
+  # ---------------------------------------------------------------------------
+  telegram:
+    build: .
+    command: ["telegram"]
+    volumes:
+      - ./data:/app/data
+      - ./config.py:/app/config.py:ro
+      - ./skills:/app/skills
+      - ./mcp_config.json:/app/mcp_config.json:ro
+    env_file:
+      - .env
+    restart: unless-stopped
+    profiles:
+      - telegram
+
+  # ---------------------------------------------------------------------------
+  # Discord Bot
+  # ---------------------------------------------------------------------------
+  discord:
+    build: .
+    command: ["discord"]
+    volumes:
+      - ./data:/app/data
+      - ./config.py:/app/config.py:ro
+      - ./skills:/app/skills
+      - ./mcp_config.json:/app/mcp_config.json:ro
+    env_file:
+      - .env
+    restart: unless-stopped
+    profiles:
+      - discord
+
+  # ---------------------------------------------------------------------------
+  # Slack Bot
+  # ---------------------------------------------------------------------------
+  slack:
+    build: .
+    command: ["slack"]
+    volumes:
+      - ./data:/app/data
+      - ./config.py:/app/config.py:ro
+      - ./skills:/app/skills
+      - ./mcp_config.json:/app/mcp_config.json:ro
+    env_file:
+      - .env
+    restart: unless-stopped
+    profiles:
+      - slack
+
+  # ---------------------------------------------------------------------------
+  # MS Teams Bot
+  # ---------------------------------------------------------------------------
+  bot:
+    build: .
+    command: ["bot"]
+    ports:
+      - "3978:3978"
+    volumes:
+      - ./data:/app/data
+      - ./config.py:/app/config.py:ro
+      - ./skills:/app/skills
+      - ./mcp_config.json:/app/mcp_config.json:ro
+    env_file:
+      - .env
+    restart: unless-stopped
+    profiles:
+      - teams
+
+  # ---------------------------------------------------------------------------
+  # WhatsApp Service (Node.js Baileys)
+  # ---------------------------------------------------------------------------
+  whatsapp:
+    build: ./whatsapp_service
+    ports:
+      - "3979:3979"
+    volumes:
+      - ./whatsapp_service/auth:/app/auth
+    restart: unless-stopped
+    profiles:
+      - whatsapp
