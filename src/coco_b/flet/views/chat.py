@@ -211,121 +211,108 @@ class ChatView:
             ChatMessage(text=text, is_user=True, timestamp=datetime.now().strftime("%H:%M"))
         )
         self.page.update()
-        self._process_bot_response(text)
+        self.page.run_task(self._process_bot_response, text)
 
-    def _process_bot_response(self, user_message: str):
-        """Process bot response using streaming (tokens appear immediately)."""
+    async def _process_bot_response(self, user_message: str):
+        """Process bot response using streaming on Flet's event loop."""
         if self._is_processing:
             return
         self._is_processing = True
         self._show_typing_indicator()
         self._last_ui_update = 0.0
 
-        def run_streaming_chat():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                if self.router:
-                    is_skill, skill_name, remaining = self.router.is_skill_invocation(user_message)
-                    skill_context = ""
-                    effective_message = user_message
+        try:
+            if self.router:
+                is_skill, skill_name, remaining = self.router.is_skill_invocation(user_message)
+                skill_context = ""
+                effective_message = user_message
 
-                    if is_skill:
-                        skill_context = self.router.get_skill_context(skill_name)
-                        effective_message = remaining if remaining else f"Execute the {skill_name} skill"
+                if is_skill:
+                    skill_context = self.router.get_skill_context(skill_name)
+                    effective_message = remaining if remaining else f"Execute the {skill_name} skill"
 
-                        if skill_name == "google-search":
-                            if self.mcp_manager and self.mcp_manager.is_connected('playwright'):
-                                query = remaining if remaining else "google search test"
-                                search_results = self._execute_google_search(query)
-                                if search_results and len(search_results) > 50:
-                                    skill_context += f"\n\n## Live Search Results\n\nI executed a Google search for '{query}'. Here are the results:\n\n{search_results}\n\nPlease summarize these search results for the user. DO NOT say you cannot access the web - the results are provided above."
-                                    effective_message = f"Summarize the search results for: {query}"
-                            elif self.mcp_manager and not self.mcp_manager.is_connected('playwright'):
-                                skill_context += "\n\n**ERROR**: Playwright MCP is not connected. Please go to MCP Tools tab and connect Playwright first."
+                    if skill_name == "google-search":
+                        if self.mcp_manager and self.mcp_manager.is_connected('playwright'):
+                            query = remaining if remaining else "google search test"
+                            search_results = await asyncio.to_thread(self._execute_google_search, query)
+                            if search_results and len(search_results) > 50:
+                                skill_context += f"\n\n## Live Search Results\n\nI executed a Google search for '{query}'. Here are the results:\n\n{search_results}\n\nPlease summarize these search results for the user. DO NOT say you cannot access the web - the results are provided above."
+                                effective_message = f"Summarize the search results for: {query}"
+                        elif self.mcp_manager and not self.mcp_manager.is_connected('playwright'):
+                            skill_context += "\n\n**ERROR**: Playwright MCP is not connected. Please go to MCP Tools tab and connect Playwright first."
 
-                        elif skill_name == "browse":
-                            if self.mcp_manager and self.mcp_manager.is_connected('playwright'):
-                                url = remaining.strip() if remaining else "https://google.com"
-                                if not url.startswith("http"):
-                                    url = "https://" + url
-                                browse_results = self._execute_browse(url)
-                                if browse_results:
-                                    skill_context += f"\n\n## Page Content\n\nI opened {url} in the browser. Here's the page content:\n\n{browse_results}\n\nDescribe what you see on this page."
-                                    effective_message = f"Describe the content from {url}"
-                            elif self.mcp_manager and not self.mcp_manager.is_connected('playwright'):
-                                skill_context += "\n\n**ERROR**: Playwright MCP is not connected. Please go to MCP Tools tab and connect Playwright first."
+                    elif skill_name == "browse":
+                        if self.mcp_manager and self.mcp_manager.is_connected('playwright'):
+                            url = remaining.strip() if remaining else "https://google.com"
+                            if not url.startswith("http"):
+                                url = "https://" + url
+                            browse_results = await asyncio.to_thread(self._execute_browse, url)
+                            if browse_results:
+                                skill_context += f"\n\n## Page Content\n\nI opened {url} in the browser. Here's the page content:\n\n{browse_results}\n\nDescribe what you see on this page."
+                                effective_message = f"Describe the content from {url}"
+                        elif self.mcp_manager and not self.mcp_manager.is_connected('playwright'):
+                            skill_context += "\n\n**ERROR**: Playwright MCP is not connected. Please go to MCP Tools tab and connect Playwright first."
 
-                        elif skill_name == "email":
-                            if self.mcp_manager and self.mcp_manager.is_connected('google-workspace'):
-                                result = self._execute_email(remaining)
-                                if result:
-                                    self._update_bot_message(result, is_partial=False)
-                                    return
+                    elif skill_name == "email":
+                        if self.mcp_manager and self.mcp_manager.is_connected('google-workspace'):
+                            result = await asyncio.to_thread(self._execute_email, remaining)
+                            if result:
+                                self._update_bot_message(result, is_partial=False)
+                                return
 
-                        elif skill_name == "calendar":
-                            if self.mcp_manager and self.mcp_manager.is_connected('google-workspace'):
-                                result = self._execute_calendar(remaining)
-                                if result:
-                                    self._update_bot_message(result, is_partial=False)
-                                    return
+                    elif skill_name == "calendar":
+                        if self.mcp_manager and self.mcp_manager.is_connected('google-workspace'):
+                            result = await asyncio.to_thread(self._execute_calendar, remaining)
+                            if result:
+                                self._update_bot_message(result, is_partial=False)
+                                return
 
-                    async def stream_response():
-                        full_text = ""
-                        replace_marker = "\n\n<!--REPLACE_RESPONSE-->\n"
-                        async for chunk in self.router.handle_message_stream(
-                            channel="flet", user_id=self.current_user_id,
-                            user_message=effective_message, chat_id=None,
-                            user_name="Flet User",
-                            skill_context=skill_context if skill_context else None,
-                        ):
-                            full_text += chunk
-                            # Check if post-processing replaced the response
-                            if replace_marker in full_text:
-                                full_text = full_text.split(replace_marker, 1)[1]
-                            # Throttle UI updates to every 100ms during streaming
-                            now = time.monotonic()
-                            if now - self._last_ui_update >= 0.1:
-                                self._update_bot_message(full_text, is_partial=True)
-                                self._last_ui_update = now
-                        # Check final text for replacement marker
-                        if replace_marker in full_text:
-                            full_text = full_text.split(replace_marker, 1)[1]
-                        # Final update with complete text
-                        self._update_bot_message(full_text, is_partial=False)
+                full_text = ""
+                replace_marker = "\n\n<!--REPLACE_RESPONSE-->\n"
+                async for chunk in self.router.handle_message_stream(
+                    channel="flet", user_id=self.current_user_id,
+                    user_message=effective_message, chat_id=None,
+                    user_name="Flet User",
+                    skill_context=skill_context if skill_context else None,
+                ):
+                    full_text += chunk
+                    if replace_marker in full_text:
+                        full_text = full_text.split(replace_marker, 1)[1]
+                    now = time.monotonic()
+                    if now - self._last_ui_update >= 0.1:
+                        self._update_bot_message(full_text, is_partial=True)
+                        self._last_ui_update = now
+                if replace_marker in full_text:
+                    full_text = full_text.split(replace_marker, 1)[1]
+                self._update_bot_message(full_text, is_partial=False)
 
-                    loop.run_until_complete(stream_response())
+            else:
+                await asyncio.sleep(1)
+                self._update_bot_message(
+                    f"**Demo Mode**\n\nReceived: '{user_message[:50]}...'\n\n(Connect to bot backend for real responses)",
+                    is_partial=False,
+                )
 
-                else:
-                    time.sleep(1)
-                    self._update_bot_message(
-                        f"**Demo Mode**\n\nReceived: '{user_message[:50]}...'\n\n(Connect to bot backend for real responses)",
-                        is_partial=False,
-                    )
+        except Exception as ex:
+            import traceback
+            error_msg = f"**Error:** {str(ex)}"
+            traceback.print_exc()
 
-            except Exception as ex:
-                import traceback
-                error_msg = f"**Error:** {str(ex)}"
-                traceback.print_exc()
+            error_str = str(ex)
+            if "Connection refused" in error_str or "ConnectionError" in error_str:
+                provider_info = self.app_state.get_current_provider_info() if self.app_state else {}
+                base_url = provider_info.get("base_url", "")
+                if "8080" in base_url:
+                    error_msg = "**MLX server not running!**\n\nStart it in a terminal:\n```\nmlx_lm.server --model <model> --port 8080\n```"
+                elif "11434" in base_url:
+                    error_msg = "**Ollama not running!**\n\nStart it in a terminal:\n```\nollama serve\n```"
+                elif "1234" in base_url:
+                    error_msg = "**LM Studio server not running!**\n\nOpen LM Studio and start the server."
 
-                error_str = str(ex)
-                if "Connection refused" in error_str or "ConnectionError" in error_str:
-                    provider_info = self.app_state.get_current_provider_info() if self.app_state else {}
-                    base_url = provider_info.get("base_url", "")
-                    if "8080" in base_url:
-                        error_msg = "**MLX server not running!**\n\nStart it in a terminal:\n```\nmlx_lm.server --model <model> --port 8080\n```"
-                    elif "11434" in base_url:
-                        error_msg = "**Ollama not running!**\n\nStart it in a terminal:\n```\nollama serve\n```"
-                    elif "1234" in base_url:
-                        error_msg = "**LM Studio server not running!**\n\nOpen LM Studio and start the server."
+            self._update_bot_message(error_msg, is_partial=False)
 
-                self._update_bot_message(error_msg, is_partial=False)
-
-            finally:
-                loop.close()
-                self._is_processing = False
-
-        self._executor.submit(run_streaming_chat)
+        finally:
+            self._is_processing = False
 
     def _update_bot_message(self, text: str, is_partial: bool = False):
         """Replace typing indicator (or last partial) with the response."""

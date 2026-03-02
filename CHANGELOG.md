@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed — 2026-03-02 (Chat UI Refresh + Web Search)
+- **Chat response now renders immediately** — converted `_send_message` and `_process_bot_response` from `ThreadPoolExecutor` + manual `asyncio.new_event_loop()` to native `async def` on Flet's event loop; `page.update()` now runs on the correct thread so the window repaints instantly instead of only when switching apps back (macOS desktop Flet thread-safety issue)
+- **User message appears instantly on Enter** — `_send_message` is sync (shows message + calls `page.update()`), then fires `_process_bot_response` as background task via `page.run_task()`
+- MCP blocking operations (browse, search, email, calendar) use `asyncio.to_thread()` to avoid blocking the UI
+- **LLM now uses native web search instead of outputting `/google-search` as text**:
+  - **Pre-search**: router detects search-worthy queries (weather, news, prices, etc.) and fetches results *before* the LLM responds — LLM just summarizes
+  - **Slash-command intercept**: if LLM still outputs `/google-search` or `/browse query:`, router converts it to a `web_search` block automatically
+  - Removed `/google-search` from PERSONALITY.md commands list
+  - Set google-search skill to `user_invocable: false` (native `web_search` handler is better)
+  - Router filters `/google-search` from skills list in system prompt when web_tools is available
+- **ClawHub registry fixed** — updated API URL from dead `api.openclaw.ai` to live `clawhub.ai/api`, fixed search/info/download endpoints, normalized field names (`displayName`→`name`, `summary`→`description`)
+
+### Added — 2026-03-01 (User Permissions UI)
+- **User Permissions section in Settings UI** — manage roles and permissions visually
+  - View configured users with role, custom grants, and denied permissions
+  - Set user roles (admin/power_user/user/restricted) from the UI
+  - Grant or revoke individual permissions per user
+  - Remove users from the permission system
+  - Shows inactive state when no `user_roles.json` exists yet
+
 ### Added — 2026-03-01 (Per-User Permissions & Multi-Agent Routing)
 - **Per-user permission system** — role-based access control for all bot capabilities
   - `PermissionManager` (`core/user_permissions.py`) — loads `data/user_roles.json`, checks permissions, manages roles

@@ -26,6 +26,7 @@
 # Import Section
 # =============================================================================
 import asyncio
+import re
 import threading
 from typing import Dict, Optional, Union, TYPE_CHECKING
 from pathlib import Path
@@ -268,17 +269,118 @@ class MessageRouter:
         # Web search hint
         if self._web_tools and self._permission_manager.has_permission(user_id, "web_search"):
             hints += (
-                "\n\nYou can search the web for current information. "
-                "When the user asks about recent events, news, scores, weather, or anything "
-                "that requires up-to-date information, emit a ```web_search``` block:\n"
+                "\n\nYou have built-in web search. "
+                "When the user asks about weather, news, scores, prices, recent events, "
+                "or ANYTHING that needs up-to-date information, you MUST immediately "
+                "search the web yourself by emitting a ```web_search``` block — "
+                "never tell the user to search or suggest they use a skill. "
+                "Just do it automatically and give them the answer.\n"
                 "```web_search\nQUERY: <search query>\nCOUNT: 5\n```\n"
                 "You can also fetch a specific URL:\n"
                 "```web_fetch\nURL: <url>\nMAX_CHARS: 5000\n```\n"
-                "The search results will be returned to you automatically. "
-                "Do NOT use /google-search — use ```web_search``` blocks instead."
+                "The results are returned to you automatically so you can summarise the answer. "
+                "IMPORTANT: Always use ```web_search``` blocks, never /google-search or any other skill for searching."
             )
 
         return hints
+
+    # Web search prompt helpers — ensure web_search instruction is prominent
+    _WEB_HINT_MARKER = "\n\nYou have built-in web search."
+
+    def _extract_web_hint(self, hints: str) -> str:
+        """Extract the web search hint section from capability hints."""
+        marker = self._WEB_HINT_MARKER
+        idx = hints.find(marker)
+        if idx == -1:
+            return ""
+        # Find the end: next "\n\n" section or end of string
+        rest = hints[idx + len(marker):]
+        next_section = rest.find("\n\nCurrent local time:")
+        if next_section == -1:
+            next_section = rest.find("\n\nYou can set reminders")
+        if next_section == -1:
+            return hints[idx:]
+        return hints[idx:idx + len(marker) + next_section]
+
+    def _strip_web_hint(self, hints: str) -> str:
+        """Return capability hints with the web search section removed."""
+        web_hint = self._extract_web_hint(hints)
+        if not web_hint:
+            return hints
+        return hints.replace(web_hint, "")
+
+    @staticmethod
+    def _filter_web_skill_from_prompt(system_content: str) -> str:
+        """Remove /google-search from the skills list in the system prompt."""
+        import re
+        # Remove from "Skills: /a, /google-search, /b" style lists
+        system_content = re.sub(r',?\s*/google-search', '', system_content)
+        # Clean up double commas or leading commas
+        system_content = re.sub(r'Skills:\s*,', 'Skills:', system_content)
+        return system_content
+
+    # Keywords that signal the user wants real-time information
+    _SEARCH_KEYWORDS = re.compile(
+        r'\b(weather|forecast|news|score|scores|price|stock|latest|current|today|tonight|'
+        r'yesterday|tomorrow|live|recent|update|result|happening|trending|who won|'
+        r'how much is|what is the price|exchange rate|usd|gbp|eur)\b',
+        re.IGNORECASE,
+    )
+
+    def _needs_web_search(self, user_message: str) -> bool:
+        """Detect if a user message needs a web search for up-to-date info."""
+        if not self._web_tools:
+            return False
+        return bool(self._SEARCH_KEYWORDS.search(user_message))
+
+    def _pre_search(self, user_message: str) -> str:
+        """Perform a web search for the user's query and return context to inject."""
+        try:
+            results = self._web_tools.web_search(user_message, count=5)
+            if results and len(results.strip()) > 20:
+                return (
+                    f"\n\n## Web Search Results\n\n"
+                    f"I searched the web for: \"{user_message}\"\n\n"
+                    f"{results}\n\n"
+                    f"**Use these search results to answer the user's question directly.** "
+                    f"Do NOT suggest the user search themselves or use any /command. "
+                    f"Summarize the relevant information from the results above."
+                )
+        except Exception as e:
+            logger.error(f"Pre-search failed: {e}")
+        return ""
+
+    @staticmethod
+    def _intercept_slash_search(response: str) -> str:
+        """Convert slash-command search patterns in LLM output to web_search blocks.
+
+        LLMs sometimes output '/google-search <query>', '/browse query: <query>',
+        or similar instead of using ```web_search``` code blocks. This intercepts
+        those patterns and converts them so the web_tools handler can process them.
+        """
+        # Match /google-search <query>
+        match = re.search(r'/?google-search\s+(.+)', response, re.IGNORECASE)
+        if match:
+            query = match.group(1).strip()
+            response = re.sub(
+                r'/?google-search\s+.+',
+                f'```web_search\nQUERY: {query}\nCOUNT: 5\n```',
+                response, count=1, flags=re.IGNORECASE,
+            )
+            return response
+
+        # Match /browse query: <query> or /browse <non-url query>
+        match = re.search(r'/?browse\s+(?:query:\s*)?(.+)', response, re.IGNORECASE)
+        if match:
+            query = match.group(1).strip()
+            # Only intercept if it's not an actual URL
+            if not query.startswith(('http://', 'https://', 'www.')):
+                response = re.sub(
+                    r'/?browse\s+(?:query:\s*)?.+',
+                    f'```web_search\nQUERY: {query}\nCOUNT: 5\n```',
+                    response, count=1, flags=re.IGNORECASE,
+                )
+        return response
 
     def _check_handler_permission(self, user_id: str, handler_type: str) -> bool:
         """Check if user has permission to use a specific handler.
@@ -490,10 +592,12 @@ Be conversational, helpful, and reference past context when relevant."""
         self.session_manager.add_message(session_key, "user", user_message)
 
         # ==================================
-        # 2.3 Smart Search (DISABLED - Playwright too slow)
-        # Use /google-search skill manually instead
+        # 2.1 Pre-search: detect search-worthy queries and fetch results upfront
         # ==================================
         search_context = ""
+        if self._needs_web_search(user_message) and self._check_handler_permission(user_id, "web_search"):
+            print(f"[{channel}] Pre-search triggered for: {user_message[:60]}")
+            search_context = self._pre_search(user_message)
 
         # ==================================
         # 2.5 Check for direct-execution skills (email, calendar, etc.)
@@ -547,6 +651,17 @@ Be conversational, helpful, and reference past context when relevant."""
         # 5. Build messages for AI (minimal prompt - skills handle tools)
         # ==================================
         system_content = self._get_system_prompt_cached(user_id=user_id, channel=channel)
+
+        # Filter out google-search from skills list when native web search is available
+        if self._web_tools:
+            system_content = self._filter_web_skill_from_prompt(system_content)
+
+        # Prepend web search instructions (high priority — before memories/context)
+        capability_hints = self._build_capability_hints(user_id)
+        web_hint = self._extract_web_hint(capability_hints)
+        if web_hint:
+            system_content += web_hint
+
         if relevant_memories:
             system_content += f"\n\n{relevant_memories}"
 
@@ -563,8 +678,10 @@ Be conversational, helpful, and reference past context when relevant."""
                 system_content += f"\n\n{skill_context}"
                 print(f"[{channel}] Skill context added: {skill_name}")
 
-        # Add capability hints filtered by user permissions
-        system_content += self._build_capability_hints(user_id)
+        # Add remaining capability hints (schedule, etc. — web hint already prepended)
+        remaining_hints = self._strip_web_hint(capability_hints)
+        if remaining_hints:
+            system_content += remaining_hints
 
         # NOTE: MCP tools are NOT included in prompt
         # Users use skills (/email, /calendar) which call tools internally
@@ -694,6 +811,9 @@ Be conversational, helpful, and reference past context when relevant."""
         # ==================================
         # 7.8 Process web_search/web_fetch commands if present (permission-gated)
         # ==================================
+        # Intercept /google-search output from LLM and convert to web_search block
+        clean_response = self._intercept_slash_search(clean_response)
+
         if self._web_tools.has_web_commands(clean_response):
             if not self._check_handler_permission(user_id, "web_search"):
                 from coco_b.core.web_tools import WebToolsHandler
@@ -781,6 +901,14 @@ Be conversational, helpful, and reference past context when relevant."""
         self.session_manager.add_message(session_key, "user", user_message)
 
         # ==================================
+        # 2.1 Pre-search: detect search-worthy queries and fetch results upfront
+        # ==================================
+        search_context = ""
+        if self._needs_web_search(user_message) and self._check_handler_permission(user_id, "web_search"):
+            print(f"[{channel}] Pre-search triggered for: {user_message[:60]}")
+            search_context = self._pre_search(user_message)
+
+        # ==================================
         # 2.7 Record interaction for pattern detection (never blocks chat)
         # ==================================
         try:
@@ -817,6 +945,21 @@ Be conversational, helpful, and reference past context when relevant."""
         # Start with system prompt (cached, re-read only on file change)
         system_content = self._get_system_prompt_cached(user_id=user_id, channel=channel)
 
+        # Filter out google-search from skills list when native web search is available
+        if self._web_tools:
+            system_content = self._filter_web_skill_from_prompt(system_content)
+
+        # Prepend web search instructions (high priority — before memories/context)
+        capability_hints = self._build_capability_hints(user_id)
+        web_hint = self._extract_web_hint(capability_hints)
+        if web_hint:
+            system_content += web_hint
+
+        # Add pre-search results if we found any
+        if search_context:
+            system_content += search_context
+            system_content += "\n**Important:** Use the search results above to answer the user's question accurately and concisely. Provide a direct answer based on the information found."
+
         # Add relevant long-term memories
         if relevant_memories:
             system_content += f"\n\n{relevant_memories}"
@@ -826,8 +969,10 @@ Be conversational, helpful, and reference past context when relevant."""
             system_content += "\n\n" + skill_context
             print(f"[{channel}] Skill activated for {user_name or user_id}")
 
-        # Add capability hints filtered by user permissions
-        system_content += self._build_capability_hints(user_id)
+        # Add remaining capability hints (schedule, etc. — web hint already prepended)
+        remaining_hints = self._strip_web_hint(capability_hints)
+        if remaining_hints:
+            system_content += remaining_hints
 
         # NOTE: MCP tools NOT included - skills handle tools directly
 
@@ -970,6 +1115,9 @@ Be conversational, helpful, and reference past context when relevant."""
         # ==================================
         # 7.8 Process web_search/web_fetch commands if present (permission-gated)
         # ==================================
+        # Intercept /google-search output from LLM and convert to web_search block
+        clean_response = self._intercept_slash_search(clean_response)
+
         if self._web_tools.has_web_commands(clean_response):
             if not self._check_handler_permission(user_id, "web_search"):
                 from coco_b.core.web_tools import WebToolsHandler

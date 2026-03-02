@@ -41,7 +41,7 @@ logger = logging.getLogger("clawhub")
 # Default registry URL
 # =============================================================================
 
-DEFAULT_REGISTRY_URL = "https://api.openclaw.ai/v1"
+DEFAULT_REGISTRY_URL = "https://clawhub.ai/api"
 DEFAULT_CACHE_TTL = 300  # 5 minutes
 
 
@@ -167,11 +167,17 @@ class ClawHubManager:
         if cached is not None:
             return cached
 
-        data = self._api_get("/skills/search", {"q": query, "limit": str(limit)})
+        data = self._api_get("/search", {"q": query, "limit": str(limit)})
         if data is None:
             return None
 
         results = data.get("results", data.get("skills", []))
+        # Normalize field names: API returns displayName/summary, code expects name/description
+        for r in results:
+            if "displayName" in r and "name" not in r:
+                r["name"] = r["displayName"]
+            if "summary" in r and "description" not in r:
+                r["description"] = r["summary"]
         self._set_cache(cache_key, results)
         return results
 
@@ -181,6 +187,9 @@ class ClawHubManager:
 
     def get_skill_info(self, slug: str) -> Optional[Dict[str, Any]]:
         """Get detailed info for a skill by slug.
+
+        Uses search endpoint with exact slug match since the individual
+        skill detail endpoint is not available on the current API.
 
         Args:
             slug: Skill slug (e.g., "weather-forecast")
@@ -193,10 +202,24 @@ class ClawHubManager:
         if cached is not None:
             return cached
 
-        data = self._api_get(f"/skills/{slug}")
+        # Search for the exact slug
+        data = self._api_get("/search", {"q": slug, "limit": "5"})
         if data:
-            self._set_cache(cache_key, data)
-        return data
+            results = data.get("results", [])
+            # Find exact slug match
+            for r in results:
+                if r.get("slug") == slug:
+                    # Add download_url for install flow
+                    r["download_url"] = f"{self._registry_url}/download?slug={slug}"
+                    self._set_cache(cache_key, r)
+                    return r
+            # Fallback to first result if slug is close
+            if results:
+                r = results[0]
+                r["download_url"] = f"{self._registry_url}/download?slug={r['slug']}"
+                self._set_cache(cache_key, r)
+                return r
+        return None
 
     # =========================================================================
     # Install

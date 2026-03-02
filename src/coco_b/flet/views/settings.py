@@ -30,6 +30,7 @@ from coco_b.flet.theme import (
 from coco_b.flet.storage import secure_storage as _default_storage
 from coco_b.flet.components.widgets import CollapsibleSection, StyledButton
 from coco_b.flet.components.cards import ServerStatusCard, CliStatusCard
+from coco_b.core.user_permissions import Permission, UserRole, ALL_PERMISSIONS
 
 # Conditional imports
 BOT_AVAILABLE = False
@@ -99,6 +100,8 @@ class SettingsView:
             self._create_appearance_section(),
             ft.Container(height=16),
             self._create_personas_section(),
+            ft.Container(height=16),
+            self._create_user_permissions_section(),
             ft.Container(height=16),
             self._create_messaging_bots_group(),
             ft.Container(height=16),
@@ -263,6 +266,171 @@ class SettingsView:
             dd.options = [ft.dropdown.Option(n) for n in persona_names]
             current = self.router.personality._user_profiles.get("channel_defaults", {}).get(ch) if self.router else None
             dd.value = current if current in persona_names else "(none)"
+
+    # =====================================================================
+    # USER PERMISSIONS
+    # =====================================================================
+
+    def _create_user_permissions_section(self):
+        pm = getattr(self.router, '_permission_manager', None) if self.router else None
+
+        self._perm_user_list = ft.Column(spacing=4)
+        self._perm_status = ft.Text("", size=12, color=AppColors.SUCCESS, visible=False)
+        self._perm_user_id_field = ft.TextField(
+            label="User ID", width=200, text_size=13, dense=True,
+        )
+        self._perm_role_dropdown = ft.Dropdown(
+            label="Role", width=160, text_size=12, dense=True,
+            options=[ft.dropdown.Option(r.value) for r in UserRole],
+            value=UserRole.USER.value,
+        )
+        self._perm_permission_dropdown = ft.Dropdown(
+            label="Permission", width=180, text_size=12, dense=True,
+            options=[ft.dropdown.Option(p.value) for p in Permission],
+            value=Permission.CHAT.value,
+        )
+
+        self._refresh_perm_user_list()
+
+        if pm and not pm.enabled:
+            inactive_msg = ft.Text(
+                "Permission system is inactive (no data/user_roles.json). "
+                "Set a user role below to activate it.",
+                size=12, color=AppColors.TEXT_SECONDARY, italic=True,
+            )
+        else:
+            inactive_msg = ft.Container()
+
+        content = ft.Column([
+            inactive_msg,
+            ft.Text("Configured Users", size=13, weight=ft.FontWeight.W_600, color=AppColors.TEXT_PRIMARY),
+            self._perm_user_list,
+            ft.Divider(height=1, color=AppColors.BORDER),
+            ft.Text("Set User Role", size=13, weight=ft.FontWeight.W_600, color=AppColors.TEXT_PRIMARY),
+            ft.Row([
+                self._perm_user_id_field,
+                self._perm_role_dropdown,
+                ft.ElevatedButton("Set Role", icon=icons.PERSON_ADD, on_click=self._on_perm_set_role),
+            ], spacing=8),
+            ft.Divider(height=1, color=AppColors.BORDER),
+            ft.Text("Grant / Revoke Permission", size=13, weight=ft.FontWeight.W_600, color=AppColors.TEXT_PRIMARY),
+            ft.Row([
+                self._perm_permission_dropdown,
+                ft.ElevatedButton("Grant", icon=icons.ADD_CIRCLE_OUTLINE, on_click=self._on_perm_grant),
+                ft.ElevatedButton("Revoke", icon=icons.REMOVE_CIRCLE_OUTLINE, on_click=self._on_perm_revoke),
+            ], spacing=8),
+            self._perm_status,
+        ], spacing=10)
+
+        return CollapsibleSection(
+            title="User Permissions", icon=icons.ADMIN_PANEL_SETTINGS,
+            content=content, expanded=False,
+        )
+
+    def _refresh_perm_user_list(self):
+        self._perm_user_list.controls.clear()
+        pm = getattr(self.router, '_permission_manager', None) if self.router else None
+        if not pm:
+            self._perm_user_list.controls.append(
+                ft.Text("No router available.", size=12, color=AppColors.TEXT_SECONDARY, italic=True))
+            return
+
+        users = pm.get_all_users()
+        if not users:
+            self._perm_user_list.controls.append(
+                ft.Text("No users configured yet.", size=12, color=AppColors.TEXT_SECONDARY, italic=True))
+            return
+
+        for uid, entry in sorted(users.items()):
+            role = entry.get("role", "?")
+            custom = entry.get("custom_permissions", [])
+            denied = entry.get("denied_permissions", [])
+            info_parts = [role]
+            if custom:
+                info_parts.append(f"+{','.join(custom)}")
+            if denied:
+                info_parts.append(f"-{','.join(denied)}")
+
+            delete_btn = ft.IconButton(
+                icon=icons.DELETE_OUTLINE, icon_size=16, icon_color=AppColors.ERROR,
+                tooltip="Remove user", on_click=lambda e, u=uid: self._on_perm_remove_user(u),
+            )
+            row = ft.Row([
+                ft.Icon(icons.PERSON, size=16, color=AppColors.TEXT_SECONDARY),
+                ft.Text(uid, size=13, weight=ft.FontWeight.W_600, color=AppColors.TEXT_PRIMARY, width=160),
+                ft.Text(" | ".join(info_parts), size=12, color=AppColors.TEXT_SECONDARY, expand=True),
+                delete_btn,
+            ], spacing=8)
+            self._perm_user_list.controls.append(row)
+
+    def _perm_show_status(self, msg, is_error=False):
+        self._perm_status.value = msg
+        self._perm_status.color = AppColors.ERROR if is_error else AppColors.SUCCESS
+        self._perm_status.visible = True
+        self.page.update()
+
+    def _on_perm_set_role(self, e):
+        pm = getattr(self.router, '_permission_manager', None) if self.router else None
+        if not pm:
+            return
+        uid = self._perm_user_id_field.value.strip() if self._perm_user_id_field.value else ""
+        if not uid:
+            self._perm_show_status("Enter a user ID.", is_error=True)
+            return
+        role = self._perm_role_dropdown.value
+        ok = pm.set_user_role(uid, role, assigned_by="ui")
+        if ok:
+            self._perm_show_status(f"Set {uid} → {role}")
+            self._refresh_perm_user_list()
+            self.page.update()
+        else:
+            self._perm_show_status(f"Invalid role: {role}", is_error=True)
+
+    def _on_perm_grant(self, e):
+        pm = getattr(self.router, '_permission_manager', None) if self.router else None
+        if not pm:
+            return
+        uid = self._perm_user_id_field.value.strip() if self._perm_user_id_field.value else ""
+        if not uid:
+            self._perm_show_status("Enter a user ID first.", is_error=True)
+            return
+        perm = self._perm_permission_dropdown.value
+        ok = pm.grant_permission(uid, perm)
+        if ok:
+            self._perm_show_status(f"Granted '{perm}' to {uid}")
+            self._refresh_perm_user_list()
+            self.page.update()
+        else:
+            self._perm_show_status(f"Invalid permission: {perm}", is_error=True)
+
+    def _on_perm_revoke(self, e):
+        pm = getattr(self.router, '_permission_manager', None) if self.router else None
+        if not pm:
+            return
+        uid = self._perm_user_id_field.value.strip() if self._perm_user_id_field.value else ""
+        if not uid:
+            self._perm_show_status("Enter a user ID first.", is_error=True)
+            return
+        perm = self._perm_permission_dropdown.value
+        ok = pm.revoke_permission(uid, perm)
+        if ok:
+            self._perm_show_status(f"Revoked '{perm}' from {uid}")
+            self._refresh_perm_user_list()
+            self.page.update()
+        else:
+            self._perm_show_status(f"Invalid permission: {perm}", is_error=True)
+
+    def _on_perm_remove_user(self, user_id):
+        pm = getattr(self.router, '_permission_manager', None) if self.router else None
+        if not pm:
+            return
+        ok = pm.remove_user(user_id)
+        if ok:
+            self._perm_show_status(f"Removed {user_id}")
+            self._refresh_perm_user_list()
+            self.page.update()
+        else:
+            self._perm_show_status(f"User {user_id} not found.", is_error=True)
 
     # =====================================================================
     # MESSAGING BOTS GROUP

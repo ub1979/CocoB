@@ -312,7 +312,7 @@ Channels (Flet, Gradio, Teams, Telegram, WhatsApp, Discord, Slack)
 - Constant-time comparison prevents timing attacks, timestamp validation prevents replay attacks
 
 ### ClawHubManager (`coco_b.core.clawhub`)
-- Search, install, and manage community skills from OpenClaw.ai's ClawHub registry (5,700+ skills)
+- Search, install, and manage community skills from ClawHub registry at `clawhub.ai/api` (13,700+ skills)
 - OpenClaw format adapter: converts OpenClaw SKILL.md (nested emoji, `{baseDir}`, version/author) to coco B `Skill` objects
 - 5-minute search result caching, installed skills tracked in `data/clawhub_installed.json`
 - Name conflict detection: auto-prefixes `ch-` when slug matches bundled skills
@@ -358,6 +358,7 @@ Channels (Flet, Gradio, Teams, Telegram, WhatsApp, Discord, Slack)
 - System prompt filtered per user — LLM only sees tool hints for permitted capabilities
 - Handler execution gated — schedule, todo, web, skill creation blocks denied if user lacks permission
 - Commands: `/my-permissions`, `/user-role`, `/grant`, `/revoke`, `/users`
+- **Settings UI section**: "User Permissions" in Settings view — manage roles, grant/revoke permissions, remove users visually
 
 ---
 

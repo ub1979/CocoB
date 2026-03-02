@@ -148,6 +148,18 @@ class TestViewBuilds:
         result = panel.build()
         assert isinstance(result, ft.Column)
 
+    def test_user_permissions_section_builds(self, mock_page, app_state, session_manager,
+                                                skills_manager, router, secure_storage):
+        from coco_b.flet.views.settings import SettingsView
+        view = SettingsView(
+            page=mock_page, app_state=app_state, router=router,
+            session_manager=session_manager, skills_manager=skills_manager,
+            secure_storage=secure_storage, scheduler_manager=None,
+        )
+        view.build()
+        result = view._create_user_permissions_section()
+        assert isinstance(result, ft.Container)  # CollapsibleSection is a Container
+
     def test_clawhub_panel_builds(self, mock_page, app_state, router):
         from coco_b.flet.views.clawhub import ClawHubPanel
         panel = ClawHubPanel(page=mock_page, app_state=app_state,
