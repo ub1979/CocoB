@@ -1,6 +1,6 @@
 # WhatsApp Service (Baileys)
 
-A secure Node.js microservice that handles WhatsApp Web connectivity for mr_bot.
+A secure Node.js microservice that handles WhatsApp Web connectivity for SkillForge.
 
 ## Why This Approach?
 
@@ -59,7 +59,7 @@ curl http://localhost:3979/status
 ```bash
 curl -X POST http://localhost:3979/send \
   -H "Content-Type: application/json" \
-  -d '{"to": "1234567890", "message": "Hello from mr_bot!"}'
+  -d '{"to": "1234567890", "message": "Hello from SkillForge!"}'
 ```
 
 **Set webhook for incoming messages:**
@@ -89,13 +89,13 @@ rm -rf auth_info/
 npm start
 ```
 
-## Integration with mr_bot
+## Integration with SkillForge
 
 The Python bot communicates with this service via HTTP:
 
 ```
 ┌─────────────┐     HTTP API      ┌──────────────────┐     WebSocket     ┌──────────────┐
-│   mr_bot    │ ←───────────────→ │ WhatsApp Service │ ←───────────────→ │ WhatsApp Web │
+│   SkillForge    │ ←───────────────→ │ WhatsApp Service │ ←───────────────→ │ WhatsApp Web │
 │  (Python)   │    localhost:3979 │    (Node.js)     │                   │   Servers    │
 └─────────────┘                   └──────────────────┘                   └──────────────┘
 ```

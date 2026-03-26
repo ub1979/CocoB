@@ -14,7 +14,7 @@ class TestSecurityLevel:
 
     def test_security_level_values(self):
         """Security levels should have correct integer values."""
-        from coco_b.core.auth_manager import SecurityLevel
+        from skillforge.core.auth_manager import SecurityLevel
         
         assert SecurityLevel.GREEN.value == 0
         assert SecurityLevel.YELLOW.value == 1
@@ -23,7 +23,7 @@ class TestSecurityLevel:
 
     def test_security_level_ordering(self):
         """Higher levels should have higher values."""
-        from coco_b.core.auth_manager import SecurityLevel
+        from skillforge.core.auth_manager import SecurityLevel
         
         assert SecurityLevel.GREEN.value < SecurityLevel.YELLOW.value
         assert SecurityLevel.YELLOW.value < SecurityLevel.ORANGE.value
@@ -35,7 +35,7 @@ class TestAuthSession:
 
     def test_session_creation(self):
         """AuthSession should store level and expiry correctly."""
-        from coco_b.core.auth_manager import AuthSession, SecurityLevel
+        from skillforge.core.auth_manager import AuthSession, SecurityLevel
         
         expires = datetime.now() + timedelta(minutes=30)
         session = AuthSession(SecurityLevel.YELLOW, expires)
@@ -46,7 +46,7 @@ class TestAuthSession:
 
     def test_session_expiry(self):
         """Expired session should return is_valid=False."""
-        from coco_b.core.auth_manager import AuthSession, SecurityLevel
+        from skillforge.core.auth_manager import AuthSession, SecurityLevel
         
         expires = datetime.now() - timedelta(minutes=1)  # Already expired
         session = AuthSession(SecurityLevel.YELLOW, expires)
@@ -55,7 +55,7 @@ class TestAuthSession:
 
     def test_time_remaining(self):
         """time_remaining should return correct timedelta."""
-        from coco_b.core.auth_manager import AuthSession, SecurityLevel
+        from skillforge.core.auth_manager import AuthSession, SecurityLevel
         
         expires = datetime.now() + timedelta(minutes=30)
         session = AuthSession(SecurityLevel.YELLOW, expires)
@@ -65,7 +65,7 @@ class TestAuthSession:
 
     def test_time_remaining_expired(self):
         """time_remaining should return 0 for expired session."""
-        from coco_b.core.auth_manager import AuthSession, SecurityLevel
+        from skillforge.core.auth_manager import AuthSession, SecurityLevel
         
         expires = datetime.now() - timedelta(minutes=1)
         session = AuthSession(SecurityLevel.YELLOW, expires)
@@ -74,7 +74,7 @@ class TestAuthSession:
 
     def test_update_activity(self):
         """update_activity should update last_activity timestamp."""
-        from coco_b.core.auth_manager import AuthSession, SecurityLevel
+        from skillforge.core.auth_manager import AuthSession, SecurityLevel
         
         expires = datetime.now() + timedelta(minutes=30)
         session = AuthSession(SecurityLevel.YELLOW, expires)
@@ -91,7 +91,7 @@ class TestAuthManagerSetup:
 
     def test_initialization(self):
         """AuthManager should initialize with empty state."""
-        from coco_b.core.auth_manager import AuthManager
+        from skillforge.core.auth_manager import AuthManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)
@@ -102,7 +102,7 @@ class TestAuthManagerSetup:
 
     def test_setup_password_success(self):
         """Setting up password should work with valid input."""
-        from coco_b.core.auth_manager import AuthManager
+        from skillforge.core.auth_manager import AuthManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)
@@ -112,7 +112,7 @@ class TestAuthManagerSetup:
 
     def test_setup_password_too_short(self):
         """Password shorter than 8 chars should be rejected."""
-        from coco_b.core.auth_manager import AuthManager
+        from skillforge.core.auth_manager import AuthManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)
@@ -122,7 +122,7 @@ class TestAuthManagerSetup:
 
     def test_setup_password_already_set(self):
         """Setting password twice should fail."""
-        from coco_b.core.auth_manager import AuthManager
+        from skillforge.core.auth_manager import AuthManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)
@@ -132,7 +132,7 @@ class TestAuthManagerSetup:
 
     def test_setup_pin_success(self):
         """Setting up PIN should work with valid 4-digit input."""
-        from coco_b.core.auth_manager import AuthManager
+        from skillforge.core.auth_manager import AuthManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)
@@ -143,7 +143,7 @@ class TestAuthManagerSetup:
 
     def test_setup_pin_invalid_format(self):
         """PIN must be exactly 4 digits."""
-        from coco_b.core.auth_manager import AuthManager
+        from skillforge.core.auth_manager import AuthManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)
@@ -156,7 +156,7 @@ class TestAuthManagerSetup:
 
     def test_setup_pin_without_password(self):
         """PIN setup should fail if password not set."""
-        from coco_b.core.auth_manager import AuthManager
+        from skillforge.core.auth_manager import AuthManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)
@@ -165,7 +165,7 @@ class TestAuthManagerSetup:
 
     def test_change_pin_success(self):
         """Changing PIN should work with correct old PIN."""
-        from coco_b.core.auth_manager import AuthManager
+        from skillforge.core.auth_manager import AuthManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)
@@ -178,7 +178,7 @@ class TestAuthManagerSetup:
 
     def test_change_pin_wrong_old_pin(self):
         """Changing PIN should fail with wrong old PIN."""
-        from coco_b.core.auth_manager import AuthManager
+        from skillforge.core.auth_manager import AuthManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)
@@ -194,7 +194,7 @@ class TestAuthManagerVerification:
 
     def test_verify_password_correct(self):
         """Correct password should verify successfully."""
-        from coco_b.core.auth_manager import AuthManager
+        from skillforge.core.auth_manager import AuthManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)
@@ -204,7 +204,7 @@ class TestAuthManagerVerification:
 
     def test_verify_password_incorrect(self):
         """Incorrect password should fail verification."""
-        from coco_b.core.auth_manager import AuthManager
+        from skillforge.core.auth_manager import AuthManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)
@@ -214,7 +214,7 @@ class TestAuthManagerVerification:
 
     def test_verify_password_not_set(self):
         """Verifying password when not set should fail."""
-        from coco_b.core.auth_manager import AuthManager
+        from skillforge.core.auth_manager import AuthManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)
@@ -223,7 +223,7 @@ class TestAuthManagerVerification:
 
     def test_verify_pin_correct(self):
         """Correct PIN should verify successfully."""
-        from coco_b.core.auth_manager import AuthManager
+        from skillforge.core.auth_manager import AuthManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)
@@ -234,7 +234,7 @@ class TestAuthManagerVerification:
 
     def test_verify_pin_incorrect(self):
         """Incorrect PIN should fail verification."""
-        from coco_b.core.auth_manager import AuthManager
+        from skillforge.core.auth_manager import AuthManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)
@@ -245,7 +245,7 @@ class TestAuthManagerVerification:
 
     def test_verify_pin_not_set(self):
         """Verifying PIN when not set should fail."""
-        from coco_b.core.auth_manager import AuthManager
+        from skillforge.core.auth_manager import AuthManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)
@@ -255,7 +255,7 @@ class TestAuthManagerVerification:
 
     def test_timing_attack_protection_password(self):
         """Password verification should use constant-time comparison."""
-        from coco_b.core.auth_manager import AuthManager
+        from skillforge.core.auth_manager import AuthManager
         import time
         
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -289,7 +289,7 @@ class TestAuthManagerSessions:
 
     def test_authenticate_pin_creates_session(self):
         """Successful PIN auth should create YELLOW session."""
-        from coco_b.core.auth_manager import AuthManager, SecurityLevel
+        from skillforge.core.auth_manager import AuthManager, SecurityLevel
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)
@@ -305,7 +305,7 @@ class TestAuthManagerSessions:
 
     def test_authenticate_password_creates_session(self):
         """Successful password auth should create ORANGE session."""
-        from coco_b.core.auth_manager import AuthManager, SecurityLevel
+        from skillforge.core.auth_manager import AuthManager, SecurityLevel
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)
@@ -319,7 +319,7 @@ class TestAuthManagerSessions:
 
     def test_authenticate_wrong_credentials_no_session(self):
         """Failed auth should not create session."""
-        from coco_b.core.auth_manager import AuthManager
+        from skillforge.core.auth_manager import AuthManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)
@@ -331,7 +331,7 @@ class TestAuthManagerSessions:
 
     def test_session_expiry(self):
         """Session should expire after configured time."""
-        from coco_b.core.auth_manager import AuthManager, AuthSession, SecurityLevel
+        from skillforge.core.auth_manager import AuthManager, AuthSession, SecurityLevel
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)
@@ -353,7 +353,7 @@ class TestAuthManagerSessions:
 
     def test_clear_session(self):
         """Clear session should remove it."""
-        from coco_b.core.auth_manager import AuthManager
+        from skillforge.core.auth_manager import AuthManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)
@@ -366,7 +366,7 @@ class TestAuthManagerSessions:
 
     def test_extend_session(self):
         """Extend session should increase expiry time."""
-        from coco_b.core.auth_manager import AuthManager, AuthSession, SecurityLevel
+        from skillforge.core.auth_manager import AuthManager, AuthSession, SecurityLevel
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)
@@ -402,7 +402,7 @@ class TestAuthManagerAccessControl:
 
     def test_green_level_always_allowed(self):
         """GREEN level should always be allowed without auth."""
-        from coco_b.core.auth_manager import AuthManager, SecurityLevel
+        from skillforge.core.auth_manager import AuthManager, SecurityLevel
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)
@@ -413,7 +413,7 @@ class TestAuthManagerAccessControl:
 
     def test_yellow_level_requires_pin(self):
         """YELLOW level should require PIN when no session."""
-        from coco_b.core.auth_manager import AuthManager, SecurityLevel
+        from skillforge.core.auth_manager import AuthManager, SecurityLevel
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)
@@ -427,7 +427,7 @@ class TestAuthManagerAccessControl:
 
     def test_yellow_level_with_active_session(self):
         """YELLOW level should be allowed with YELLOW session."""
-        from coco_b.core.auth_manager import AuthManager, SecurityLevel
+        from skillforge.core.auth_manager import AuthManager, SecurityLevel
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)
@@ -441,7 +441,7 @@ class TestAuthManagerAccessControl:
 
     def test_orange_level_requires_password(self):
         """ORANGE level should require password when no session."""
-        from coco_b.core.auth_manager import AuthManager, SecurityLevel
+        from skillforge.core.auth_manager import AuthManager, SecurityLevel
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)
@@ -453,7 +453,7 @@ class TestAuthManagerAccessControl:
 
     def test_orange_level_with_orange_session(self):
         """ORANGE level should be allowed with ORANGE session."""
-        from coco_b.core.auth_manager import AuthManager, SecurityLevel
+        from skillforge.core.auth_manager import AuthManager, SecurityLevel
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)
@@ -465,7 +465,7 @@ class TestAuthManagerAccessControl:
 
     def test_orange_session_covers_yellow(self):
         """ORANGE session should satisfy YELLOW requirements."""
-        from coco_b.core.auth_manager import AuthManager, SecurityLevel
+        from skillforge.core.auth_manager import AuthManager, SecurityLevel
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)
@@ -477,7 +477,7 @@ class TestAuthManagerAccessControl:
 
     def test_yellow_session_does_not_cover_orange(self):
         """YELLOW session should not satisfy ORANGE requirements."""
-        from coco_b.core.auth_manager import AuthManager, SecurityLevel
+        from skillforge.core.auth_manager import AuthManager, SecurityLevel
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)
@@ -491,7 +491,7 @@ class TestAuthManagerAccessControl:
 
     def test_red_level_requires_password_confirm(self):
         """RED level should require password+confirm."""
-        from coco_b.core.auth_manager import AuthManager, SecurityLevel
+        from skillforge.core.auth_manager import AuthManager, SecurityLevel
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)
@@ -504,7 +504,7 @@ class TestAuthManagerAccessControl:
 
     def test_yellow_fallback_to_password_if_no_pin(self):
         """YELLOW should fallback to password if PIN not set."""
-        from coco_b.core.auth_manager import AuthManager, SecurityLevel
+        from skillforge.core.auth_manager import AuthManager, SecurityLevel
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)
@@ -521,7 +521,7 @@ class TestAuthManagerPersistence:
 
     def test_sessions_persist_to_disk(self):
         """Sessions should be saved and loaded from disk."""
-        from coco_b.core.auth_manager import AuthManager
+        from skillforge.core.auth_manager import AuthManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create first instance and authenticate
@@ -539,7 +539,7 @@ class TestAuthManagerPersistence:
 
     def test_expired_sessions_not_loaded(self):
         """Expired sessions should not be loaded from disk."""
-        from coco_b.core.auth_manager import AuthManager
+        from skillforge.core.auth_manager import AuthManager
         import json
         
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -569,7 +569,7 @@ class TestAuthManagerUtilities:
 
     def test_get_auth_summary(self):
         """get_auth_summary should return correct status."""
-        from coco_b.core.auth_manager import AuthManager
+        from skillforge.core.auth_manager import AuthManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)
@@ -593,7 +593,7 @@ class TestAuthManagerUtilities:
 
     def test_clear_all_sessions(self):
         """clear_all_sessions should remove all sessions."""
-        from coco_b.core.auth_manager import AuthManager
+        from skillforge.core.auth_manager import AuthManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth = AuthManager(data_dir=tmpdir)

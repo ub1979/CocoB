@@ -22,15 +22,15 @@ sys.path.insert(0, 'src')
 
 # Mock the circular import
 import types
-mcp_models = types.ModuleType('coco_b.ui.settings.mcp_models')
+mcp_models = types.ModuleType('skillforge.ui.settings.mcp_models')
 mcp_models.MCPServerType = type('MCPServerType', (), {{'STDIO': 'stdio', 'DOCKER': 'docker', 'SSE': 'sse', 'HTTP': 'http'}})
 mcp_models.MCPConnectionStatus = type('MCPConnectionStatus', (), {{}})
 mcp_models.MCPServerConfig = dict
 mcp_models.MCPServerState = dict
 mcp_models.validate_config = lambda x: None
-sys.modules['coco_b.ui.settings.mcp_models'] = mcp_models
+sys.modules['skillforge.ui.settings.mcp_models'] = mcp_models
 
-from coco_b.core.mcp_client import validate_mcp_command, MCPSecurityError
+from skillforge.core.mcp_client import validate_mcp_command, MCPSecurityError
 
 try:
     validate_mcp_command({{'command': '{command}', 'args': {args!r}}})

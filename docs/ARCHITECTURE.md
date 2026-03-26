@@ -2,7 +2,7 @@
 
 ## Overview
 
-**coco B** is an AI chatbot with persistent memory, designed for multi-channel deployment. It uses a two-tier storage architecture that preserves complete conversation history while managing context window limits intelligently. Built with security in mind by Idrak AI Ltd.
+**SkillForge** is an AI chatbot with persistent memory, designed for multi-channel deployment. It uses a two-tier storage architecture that preserves complete conversation history while managing context window limits intelligently. Built with security in mind by Idrak AI Ltd.
 
 ### Core Philosophy
 
@@ -29,12 +29,12 @@
 
 ### Why Skills Instead of Raw Tools?
 
-coco B uses a **skills-based architecture** instead of exposing raw MCP tools to the LLM:
+SkillForge uses a **skills-based architecture** instead of exposing raw MCP tools to the LLM:
 
 | Approach | Prompt Size | Speed | Token Cost |
 |----------|-------------|-------|------------|
 | Raw Tools in Prompt | Large (60+ tools) | Slow | High |
-| **Skills (coco B)** | Small (personality only) | Fast | Low |
+| **Skills (SkillForge)** | Small (personality only) | Fast | Low |
 
 ### How It Works
 
@@ -78,7 +78,7 @@ User: /email send to john@example.com subject "Hi" body "Hello!"
 
 ### Creating New Skills
 
-Users can create custom skills in `~/.coco_B/skills/` or `skills/` folder:
+Users can create custom skills in `~/.skillforge/skills/` or `skills/` folder:
 
 ```markdown
 ---
@@ -144,7 +144,7 @@ For skills that need MCP tools, add direct execution in `flet_ui_complete.py`.
 ## Project Structure
 
 ```
-coco_B/
+skillforge/
 ├── bot.py                  # Flask server for MS Teams webhook
 ├── gradio_ui.py            # Web UI for testing (port 7777)
 ├── flet_ui_complete.py     # Modern cross-platform desktop UI (Flet)
@@ -466,7 +466,7 @@ python -m core.llm.auth logout <provider> # Logout
 | `base.py` | Shared OAuth utilities (callback handler, PKCE, flow runner) |
 | `gemini.py` | Google Gemini OAuth (credential extraction, login, refresh) |
 | `anthropic.py` | Anthropic Claude OAuth (credential extraction, login, refresh) |
-| `credentials.py` | Token storage (`~/.mr_bot/credentials.json`) and refresh |
+| `credentials.py` | Token storage (`~/.skillforge/credentials.json`) and refresh |
 | `cli.py` | CLI commands (login, status, logout) |
 | `README.md` | Detailed module documentation |
 
@@ -486,7 +486,7 @@ python -m core.llm.auth logout <provider> # Logout
 2. Browser opens for user to authenticate
 3. Callback server receives auth code
 4. Code exchanged for access + refresh tokens
-5. Tokens stored in `~/.mr_bot/credentials.json` (permissions: 0600)
+5. Tokens stored in `~/.skillforge/credentials.json` (permissions: 0600)
 6. Providers use tokens via `get_valid_token()`, auto-refresh when expired
 
 **OAuth Endpoints**:
@@ -610,9 +610,9 @@ When the user asks to commit:
 
 | Location | Priority | Description |
 |----------|----------|-------------|
-| `~/.mr_bot/skills/` | Highest | User's custom skills |
+| `~/.skillforge/skills/` | Highest | User's custom skills |
 | `./skills/` | Medium | Project-local skills |
-| Built-in (`skills/`) | Lowest | Bundled with mr_bot |
+| Built-in (`skills/`) | Lowest | Bundled with SkillForge |
 
 **Key Classes**:
 
@@ -812,10 +812,10 @@ Each line in a `.jsonl` file is one of:
 **Approach**: Secure microservice architecture using Baileys (Node.js)
 
 ```
-┌─────────────┐     HTTP API      ┌──────────────────┐     WebSocket     ┌──────────────┐
-│   mr_bot    │ ←───────────────→ │ WhatsApp Service │ ←───────────────→ │ WhatsApp Web │
-│  (Python)   │    localhost:3979 │  (Node.js/Baileys)│                   │   Servers    │
-└─────────────┘                   └──────────────────┘                   └──────────────┘
+┌──────────────┐     HTTP API      ┌──────────────────┐     WebSocket     ┌──────────────┐
+│  SkillForge  │ ←───────────────→ │ WhatsApp Service │ ←───────────────→ │ WhatsApp Web │
+│   (Python)   │    localhost:3979 │  (Node.js/Baileys)│                   │   Servers    │
+└──────────────┘                   └──────────────────┘                   └──────────────┘
 ```
 
 **Why this approach?**
@@ -1125,7 +1125,7 @@ with gr.Tabs():
 
 ### Security by Design
 
-mr_bot implements multiple security layers to protect against common vulnerabilities:
+SkillForge implements multiple security layers to protect against common vulnerabilities:
 
 ### 1. Input Validation Layer (`core/sessions.py`)
 
@@ -1257,7 +1257,7 @@ Recommended CI/CD pipeline:
 | Add mood tracking fields | `core/personality.py` | In `update_mood()` method |
 | Change JSONL message format | `core/sessions.py` | In `add_message()` method |
 | Create a new skill | Gradio UI | Skills tab > Create New Skill |
-| Create skill manually | `~/.mr_bot/skills/` | Create `skill-name/SKILL.md` |
+| Create skill manually | `~/.skillforge/skills/` | Create `skill-name/SKILL.md` |
 | Edit bundled skills | Gradio UI | Skills tab > Edit (saves to user dir) |
 | List available skills | Chat | Type `/skills` or `/help` |
 | Invoke a skill | Chat | Type `/skill-name` (e.g., `/commit`) |
@@ -1635,7 +1635,7 @@ python -m core.llm.auth status
 }
 ```
 
-### ~/.mr_bot/credentials.json (OAuth Tokens)
+### ~/.skillforge/credentials.json (OAuth Tokens)
 
 ```json
 {

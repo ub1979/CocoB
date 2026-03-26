@@ -5,13 +5,13 @@
     Description : Test script to see the session manager in action.
                   No MS Teams credentials needed! This script tests the
                   conversation handling, memory persistence, and command
-                  processing capabilities of the mr_bot system.
+                  processing capabilities of the SkillForge system.
     
     Modifying it on 2026-02-07
     
     Done by : Syed Usama Bukhari & Idrak AI Ltd Team
     
-    Project : mr_bot - Persistent Memory AI Chatbot
+    Project : SkillForge - Persistent Memory AI Chatbot
     
     License : Open Source - Safe Open Community Project
     
@@ -23,12 +23,12 @@
 # Import Section
 # =============================================================================
 import sys
-from coco_b import PROJECT_ROOT
+from skillforge import PROJECT_ROOT
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from coco_b.core.sessions import SessionManager
-from coco_b.core.llm import LLMProviderFactory
-from coco_b.core.router import MessageRouter
+from skillforge.core.sessions import SessionManager
+from skillforge.core.llm import LLMProviderFactory
+from skillforge.core.router import MessageRouter
 import asyncio
 import config
 
@@ -40,7 +40,7 @@ import config
 # =========================================================================
 async def test_conversations():
     """Main test function for conversation handling and memory persistence"""
-    print("Testing Session Manager (coco B-style)\n")
+    print("Testing Session Manager (SkillForge-style)\n")
     print("=" * 60)
 
     # ==================================
@@ -157,7 +157,7 @@ if __name__ == "__main__":
 '''
     End of File : test_local.py
     
-    Project : mr_bot - Persistent Memory AI Chatbot
+    Project : SkillForge - Persistent Memory AI Chatbot
     
     License : Open Source - Safe Open Community Project
     

@@ -7,7 +7,7 @@ import pytest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from coco_b.core.personality import PersonalityManager, Persona
+from skillforge.core.personality import PersonalityManager, Persona
 
 
 # =============================================================================
@@ -21,7 +21,7 @@ def persona_dir(tmp_path):
     base.mkdir()
     agents = base / "agents"
     agents.mkdir()
-    (base / "PERSONALITY.md").write_text("You are coco B, a helpful bot.")
+    (base / "PERSONALITY.md").write_text("You are SkillForge, a helpful bot.")
     return base
 
 
@@ -223,7 +223,7 @@ class TestSystemPromptLayering:
 
     def test_default_unchanged_without_persona(self, pm):
         prompt = pm.get_system_prompt()
-        assert "coco B" in prompt
+        assert "SkillForge" in prompt
         assert "Persona Override" not in prompt
 
     def test_persona_appended_in_full_mode(self, persona_dir):
@@ -261,7 +261,7 @@ class TestSystemPromptLayering:
         pm = PersonalityManager(base_path=persona_dir, skills_manager=None)
         pm.set_user_persona("alice", "formal")
         prompt = pm.get_system_prompt(user_id="alice")
-        assert "coco B" in prompt
+        assert "SkillForge" in prompt
         assert "Be formal." in prompt
 
     def test_channel_persona_in_prompt(self, persona_dir):
@@ -377,11 +377,11 @@ def mock_llm():
 @pytest.fixture
 def router(tmp_path, mock_llm, persona_dir):
     """Create a MessageRouter with personas in a temp directory."""
-    from coco_b.core.sessions import SessionManager
-    from coco_b.core.router import MessageRouter
+    from skillforge.core.sessions import SessionManager
+    from skillforge.core.router import MessageRouter
 
     # Patch PersonalityManager to use our temp persona_dir
-    with patch("coco_b.core.router.PersonalityManager") as MockPM:
+    with patch("skillforge.core.router.PersonalityManager") as MockPM:
         real_pm = PersonalityManager(base_path=persona_dir, skills_manager=None)
         MockPM.return_value = real_pm
 
@@ -391,7 +391,7 @@ def router(tmp_path, mock_llm, persona_dir):
     # Point todo handler to temp file
     r._todo_handler._data_file = tmp_path / "todos.json"
     r._todo_handler._save_data({})
-    from coco_b.core.file_access import FileAccessManager
+    from skillforge.core.file_access import FileAccessManager
     r._file_access = FileAccessManager(project_root=tmp_path)
     return r
 

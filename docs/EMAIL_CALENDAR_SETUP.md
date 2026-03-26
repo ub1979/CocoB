@@ -1,6 +1,6 @@
 # Email & Calendar Integration Setup
 
-coco B supports two ways to connect Gmail and Google Calendar:
+SkillForge supports two ways to connect Gmail and Google Calendar:
 
 | Option | Cost | Setup Time | Best For |
 |--------|------|------------|----------|
@@ -17,7 +17,7 @@ Uses [mcp-google-workspace](https://github.com/j3k0/mcp-google-workspace) - comp
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com)
 2. Click **Select a Project** → **New Project**
-3. Name it `coco-b-workspace` → **Create**
+3. Name it `skillforge-workspace` → **Create**
 
 ### Step 2: Enable APIs
 
@@ -32,7 +32,7 @@ Uses [mcp-google-workspace](https://github.com/j3k0/mcp-google-workspace) - comp
 1. Go to **APIs & Services** → **OAuth consent screen**
 2. Select **External** → **Create**
 3. Fill in:
-   - App name: `coco B`
+   - App name: `SkillForge`
    - User support email: Your email
    - Developer contact: Your email
 4. Click **Save and Continue**
@@ -52,7 +52,7 @@ Uses [mcp-google-workspace](https://github.com/j3k0/mcp-google-workspace) - comp
 1. Go to **APIs & Services** → **Credentials**
 2. Click **Create Credentials** → **OAuth client ID**
 3. Application type: **Desktop app**
-4. Name: `coco B Desktop`
+4. Name: `SkillForge Desktop`
 5. Click **Create**
 6. **Download JSON** - save as `credentials.json`
 
@@ -75,9 +75,9 @@ Uses [mcp-google-workspace](https://github.com/j3k0/mcp-google-workspace) - comp
    }
    ```
 
-### Step 6: Enable in coco B
+### Step 6: Enable in SkillForge
 
-1. Open coco B
+1. Open SkillForge
 2. Go to **MCP Tools** tab
 3. Find **google-workspace** server
 4. Click **Enable** → **Connect**
@@ -121,9 +121,9 @@ npx @composio/cli add googlecalendar
 2. Navigate to **Settings** → **API Keys**
 3. Copy your API key
 
-### Step 4: Enable in coco B
+### Step 4: Enable in SkillForge
 
-1. Open coco B
+1. Open SkillForge
 2. Go to **MCP Tools** tab
 3. Find **gmail-composio** and **calendar-composio** servers
 4. Edit each and paste your Composio API key
@@ -221,7 +221,7 @@ Once configured, use these commands:
 
 **Google Account:**
 1. Go to [Google Account Permissions](https://myaccount.google.com/permissions)
-2. Find "coco B" or "Composio"
+2. Find "SkillForge" or "Composio"
 3. Click **Remove Access**
 
 **Composio:**
@@ -263,7 +263,7 @@ Once configured, use these commands:
 A: Self-hosted if you want free unlimited usage and data privacy. Composio if you want quick setup and don't mind the 100 action limit.
 
 **Q: Can I switch between options?**
-A: Yes, just disable one MCP server and enable the other in coco B settings.
+A: Yes, just disable one MCP server and enable the other in SkillForge settings.
 
 **Q: Does self-hosted work with Google Workspace accounts?**
 A: Yes, but your Workspace admin may need to approve the OAuth app.

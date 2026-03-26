@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest a new feature for coco B
+about: Suggest a new feature for SkillForge
 title: '[Feature] '
 labels: enhancement
 assignees: ''

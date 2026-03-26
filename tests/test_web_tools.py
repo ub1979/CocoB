@@ -6,7 +6,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 import httpx
 
-from coco_b.core.web_tools import (
+from skillforge.core.web_tools import (
     WebToolsHandler,
     HTMLTextExtractor,
     extract_text_from_html,

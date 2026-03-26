@@ -5,7 +5,7 @@
 import json
 import pytest
 from pathlib import Path
-from coco_b.core.user_permissions import (
+from skillforge.core.user_permissions import (
     Permission,
     UserRole,
     PermissionManager,
@@ -508,9 +508,9 @@ class TestRouterCommands:
     def router(self, tmp_path):
         """Create a minimal router with permissions enabled."""
         from unittest.mock import MagicMock
-        from coco_b.core.sessions import SessionManager
-        from coco_b.core.router import MessageRouter
-        from coco_b.core.memory import SQLiteMemory
+        from skillforge.core.sessions import SessionManager
+        from skillforge.core.router import MessageRouter
+        from skillforge.core.memory import SQLiteMemory
 
         sm = SessionManager(str(tmp_path / "sessions"))
         llm = MagicMock()
@@ -552,9 +552,9 @@ class TestRouterCommands:
     def test_my_permissions_disabled(self, tmp_path):
         """When no config file, shows disabled message."""
         from unittest.mock import MagicMock
-        from coco_b.core.sessions import SessionManager
-        from coco_b.core.router import MessageRouter
-        from coco_b.core.memory import SQLiteMemory
+        from skillforge.core.sessions import SessionManager
+        from skillforge.core.router import MessageRouter
+        from skillforge.core.memory import SQLiteMemory
 
         sm = SessionManager(str(tmp_path / "sessions"))
         llm = MagicMock()

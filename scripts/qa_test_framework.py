@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-QA Test Framework for coco B
+QA Test Framework for SkillForge
 
 Comprehensive testing suite for:
 - Session management
@@ -31,11 +31,11 @@ from typing import Dict, List, Optional, Tuple, Any
 import unittest
 from unittest.mock import Mock, patch, MagicMock
 
-from coco_b.core.sessions import SessionManager
-from coco_b.core.router import MessageRouter
-from coco_b.core.personality import PersonalityManager
-from coco_b.core.llm import LLMProviderFactory
-from coco_b.core.skills import SkillsManager
+from skillforge.core.sessions import SessionManager
+from skillforge.core.router import MessageRouter
+from skillforge.core.personality import PersonalityManager
+from skillforge.core.llm import LLMProviderFactory
+from skillforge.core.skills import SkillsManager
 
 
 class Colors:
@@ -216,7 +216,7 @@ class QATestFramework:
     
     def test_provider_factory(self):
         """Test LLM provider factory creates providers correctly"""
-        from coco_b.core.llm import LLMProviderFactory
+        from skillforge.core.llm import LLMProviderFactory
         
         # Test Ollama provider creation
         config = {
@@ -230,7 +230,7 @@ class QATestFramework:
     
     def test_provider_connection_check(self):
         """Test provider connection checking"""
-        from coco_b.ui.settings.connection import test_provider_connection
+        from skillforge.ui.settings.connection import test_provider_connection
         
         # This should work if Ollama is running
         result = test_provider_connection(
@@ -358,7 +358,7 @@ class QATestFramework:
 
     def test_skill_to_markdown(self):
         """Test skill to markdown conversion"""
-        from coco_b.core.skills import skill_to_markdown, Skill
+        from skillforge.core.skills import skill_to_markdown, Skill
 
         # Create a test skill
         test_skill = Skill(
@@ -379,7 +379,7 @@ class QATestFramework:
 
     def test_mcp_models_import(self):
         """Test MCP models can be imported"""
-        from coco_b.ui.settings.mcp_models import (
+        from skillforge.ui.settings.mcp_models import (
             MCPServerType,
             MCPConnectionStatus,
             MCPServerConfig,
@@ -399,7 +399,7 @@ class QATestFramework:
 
     def test_mcp_client_import(self):
         """Test MCP client can be imported"""
-        from coco_b.core.mcp_client import MCPClient, MCPManager
+        from skillforge.core.mcp_client import MCPClient, MCPManager
 
         # Check classes exist
         assert MCPClient is not None
@@ -407,7 +407,7 @@ class QATestFramework:
 
     def test_mcp_config_validation(self):
         """Test MCP config validation"""
-        from coco_b.ui.settings.mcp_models import validate_config, MCPServerConfig, MCPServerType
+        from skillforge.ui.settings.mcp_models import validate_config, MCPServerConfig, MCPServerType
 
         # Valid STDIO config
         valid_config = MCPServerConfig(
@@ -430,7 +430,7 @@ class QATestFramework:
 
     def test_mcp_server_config_creation(self):
         """Test MCPServerConfig dataclass"""
-        from coco_b.ui.settings.mcp_models import MCPServerConfig, MCPServerType
+        from skillforge.ui.settings.mcp_models import MCPServerConfig, MCPServerType
 
         config = MCPServerConfig(
             name="test-server",
@@ -447,7 +447,7 @@ class QATestFramework:
 
     def test_mcp_tools_module(self):
         """Test MCP tools module exists and has MCPToolHandler"""
-        from coco_b.core.mcp_tools import MCPToolHandler
+        from skillforge.core.mcp_tools import MCPToolHandler
 
         # Check class exists
         assert MCPToolHandler is not None
@@ -457,7 +457,7 @@ class QATestFramework:
 
     def test_mcp_manager_initialization(self):
         """Test MCPManager can be initialized"""
-        from coco_b.core.mcp_client import MCPManager
+        from skillforge.core.mcp_client import MCPManager
 
         # Initialize without connecting
         manager = MCPManager()
@@ -489,7 +489,7 @@ class QATestFramework:
 
     def test_telegram_channel_import(self):
         """Test Telegram channel can be imported"""
-        from coco_b.channels.telegram import TelegramChannel, TelegramConfig, create_telegram_channel
+        from skillforge.channels.telegram import TelegramChannel, TelegramConfig, create_telegram_channel
 
         assert TelegramChannel is not None
         assert TelegramConfig is not None
@@ -497,7 +497,7 @@ class QATestFramework:
 
     def test_telegram_config_creation(self):
         """Test TelegramConfig dataclass"""
-        from coco_b.channels.telegram import TelegramConfig
+        from skillforge.channels.telegram import TelegramConfig
 
         config = TelegramConfig(
             bot_token="test_token",
@@ -625,32 +625,32 @@ class QATestFramework:
     # UI & MODULE TESTS
     # =============================================================================
 
-    def test_coco_b_module_import(self):
-        """Test that coco_b.py module imports without errors"""
+    def test_skillforge_module_import(self):
+        """Test that skillforge.py module imports without errors"""
         import importlib.util
-        spec = importlib.util.spec_from_file_location("coco_b", "coco_b.py")
+        spec = importlib.util.spec_from_file_location("skillforge", "skillforge.py")
         module = importlib.util.module_from_spec(spec)
         # Don't execute - just verify it can be loaded
         assert spec is not None
         assert module is not None
 
-    def test_coco_b_syntax(self):
-        """Test coco_b.py has valid Python syntax"""
+    def test_skillforge_syntax(self):
+        """Test skillforge.py has valid Python syntax"""
         import py_compile
         try:
-            py_compile.compile("coco_b.py", doraise=True)
+            py_compile.compile("skillforge.py", doraise=True)
         except py_compile.PyCompileError as e:
-            raise AssertionError(f"Syntax error in coco_b.py: {e}")
+            raise AssertionError(f"Syntax error in skillforge.py: {e}")
 
     def test_app_colors_class(self):
         """Test AppColors class exists and has required attributes"""
-        # Import AppColors from coco_b
+        # Import AppColors from skillforge
         import importlib.util
-        spec = importlib.util.spec_from_file_location("coco_b", "coco_b.py")
+        spec = importlib.util.spec_from_file_location("skillforge", "skillforge.py")
         module = importlib.util.module_from_spec(spec)
 
         # Check the file contains AppColors class
-        with open("coco_b.py", "r") as f:
+        with open("skillforge.py", "r") as f:
             content = f.read()
             assert "class AppColors:" in content, "AppColors class not found"
             assert "PRIMARY" in content, "PRIMARY color not defined"
@@ -661,7 +661,7 @@ class QATestFramework:
 
     def test_dark_mode_colors_defined(self):
         """Test dark mode has all required color definitions"""
-        with open("coco_b.py", "r") as f:
+        with open("skillforge.py", "r") as f:
             content = f.read()
 
             # Check dark theme has essential colors
@@ -671,7 +671,7 @@ class QATestFramework:
 
     def test_appearance_section_exists(self):
         """Test Appearance section is defined in settings"""
-        with open("coco_b.py", "r") as f:
+        with open("skillforge.py", "r") as f:
             content = f.read()
             assert "_create_appearance_section" in content, "Appearance section method not found"
             assert "Dark Mode" in content, "Dark Mode toggle not found"
@@ -679,24 +679,24 @@ class QATestFramework:
 
     def test_cli_provider_buttons(self):
         """Test CLI provider cards have click handlers"""
-        with open("coco_b.py", "r") as f:
+        with open("skillforge.py", "r") as f:
             content = f.read()
             assert "CliStatusCard" in content, "CliStatusCard class not found"
             assert "_use_cli_provider_direct" in content, "Direct CLI provider method not found"
             assert "on_click" in content, "Click handlers not defined"
 
     def test_chat_avatar_icon(self):
-        """Test chat uses inner_chat.png for assistant avatar"""
-        with open("coco_b.py", "r") as f:
-            content = f.read()
-            assert "inner_chat.png" in content, "inner_chat.png not used for avatar"
+        """Test chat uses icon.png for assistant avatar"""
+        chat_msg = Path("src/skillforge/flet/components/chat_message.py")
+        content = chat_msg.read_text()
+        assert "icon.png" in content, "icon.png not used for avatar"
 
     def test_icon_files_exist(self):
         """Test required icon files exist"""
         icon_dir = Path("icon")
         assert icon_dir.exists(), "icon directory not found"
 
-        required_icons = ["coco_b_icon.png", "inner_chat.png"]
+        required_icons = ["icon.png"]
         for icon in required_icons:
             icon_path = icon_dir / icon
             assert icon_path.exists(), f"Icon file not found: {icon}"
@@ -762,7 +762,7 @@ class QATestFramework:
             "AIza",  # Google API keys
         ]
 
-        files_to_check = ["coco_b.py", "config.py", "gradio_ui.py"]
+        files_to_check = ["skillforge.py", "config.py", "gradio_ui.py"]
 
         for file_name in files_to_check:
             if Path(file_name).exists():
@@ -786,13 +786,13 @@ class QATestFramework:
     def run_all_tests(self) -> TestResult:
         """Run all QA tests"""
         print(f"\n{Colors.BOLD}{'='*60}")
-        print("       coco B QA TEST FRAMEWORK")
+        print("       SkillForge QA TEST FRAMEWORK")
         print(f"{'='*60}{Colors.END}\n")
 
         tests_to_run = [
             # Module & Syntax Tests (run first)
-            ("coco_b.py Syntax", self.test_coco_b_syntax),
-            ("coco_b.py Module Import", self.test_coco_b_module_import),
+            ("skillforge.py Syntax", self.test_skillforge_syntax),
+            ("skillforge.py Module Import", self.test_skillforge_module_import),
             ("Core Modules Import", self.test_all_core_modules_import),
             ("Config Exists", self.test_config_exists),
 
@@ -867,7 +867,7 @@ class QATestFramework:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="QA Test Framework for mr_bot")
+    parser = argparse.ArgumentParser(description="QA Test Framework for SkillForge")
     parser.add_argument("--quick", action="store_true", help="Run quick tests only")
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
     parser.add_argument("--provider", help="Test specific provider")

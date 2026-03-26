@@ -1,5 +1,5 @@
 # =============================================================================
-# docker-compose.yml — coco B AI Assistant
+# docker-compose.yml — SkillForge AI Assistant
 # =============================================================================
 # Usage:
 #   docker compose up              # Start Gradio UI (default)

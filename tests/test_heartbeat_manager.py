@@ -14,7 +14,7 @@ class TestHeartbeatType:
 
     def test_heartbeat_types_defined(self):
         """All heartbeat types should be defined."""
-        from coco_b.core.heartbeat_manager import HeartbeatType
+        from skillforge.core.heartbeat_manager import HeartbeatType
         
         assert HeartbeatType.MORNING_BRIEF == "morning_brief"
         assert HeartbeatType.DEADLINE_WATCH == "deadline_watch"
@@ -23,7 +23,7 @@ class TestHeartbeatType:
 
     def test_default_configs_exist(self):
         """Default configs should exist for all types."""
-        from coco_b.core.heartbeat_manager import HeartbeatType
+        from skillforge.core.heartbeat_manager import HeartbeatType
         
         for hb_type in [HeartbeatType.MORNING_BRIEF, HeartbeatType.DEADLINE_WATCH,
                        HeartbeatType.UNUSUAL_ACTIVITY, HeartbeatType.DAILY_SUMMARY]:
@@ -31,21 +31,21 @@ class TestHeartbeatType:
 
     def test_unusual_activity_enabled_by_default(self):
         """Unusual activity should be enabled by default."""
-        from coco_b.core.heartbeat_manager import HeartbeatType
+        from skillforge.core.heartbeat_manager import HeartbeatType
         
         config = HeartbeatType.DEFAULTS[HeartbeatType.UNUSUAL_ACTIVITY]
         assert config["enabled_by_default"] is True
 
     def test_morning_brief_default_time(self):
         """Morning brief should default to 9 AM."""
-        from coco_b.core.heartbeat_manager import HeartbeatType
+        from skillforge.core.heartbeat_manager import HeartbeatType
         
         config = HeartbeatType.DEFAULTS[HeartbeatType.MORNING_BRIEF]
         assert config["default_time"] == "09:00"
 
     def test_all_security_level_green(self):
         """All heartbeat types should be GREEN security level."""
-        from coco_b.core.heartbeat_manager import HeartbeatType
+        from skillforge.core.heartbeat_manager import HeartbeatType
         
         for hb_type, config in HeartbeatType.DEFAULTS.items():
             assert config["security_level"] == "GREEN"
@@ -56,7 +56,7 @@ class TestHeartbeatConfig:
 
     def test_config_creation(self):
         """Should create config with defaults."""
-        from coco_b.core.heartbeat_manager import HeartbeatConfig
+        from skillforge.core.heartbeat_manager import HeartbeatConfig
         
         config = HeartbeatConfig(heartbeat_type="test")
         
@@ -67,7 +67,7 @@ class TestHeartbeatConfig:
 
     def test_config_to_dict(self):
         """Should convert to dictionary correctly."""
-        from coco_b.core.heartbeat_manager import HeartbeatConfig
+        from skillforge.core.heartbeat_manager import HeartbeatConfig
         
         config = HeartbeatConfig(
             heartbeat_type="morning_brief",
@@ -82,7 +82,7 @@ class TestHeartbeatConfig:
 
     def test_config_from_dict(self):
         """Should create from dictionary correctly."""
-        from coco_b.core.heartbeat_manager import HeartbeatConfig
+        from skillforge.core.heartbeat_manager import HeartbeatConfig
         
         data = {
             "heartbeat_type": "daily_summary",
@@ -102,7 +102,7 @@ class TestHeartbeatManagerInitialization:
 
     def test_initialization(self):
         """Should initialize with empty state."""
-        from coco_b.core.heartbeat_manager import HeartbeatManager
+        from skillforge.core.heartbeat_manager import HeartbeatManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = HeartbeatManager(data_dir=tmpdir)
@@ -113,7 +113,7 @@ class TestHeartbeatManagerInitialization:
 
     def test_creates_data_directory(self):
         """Should create data directory if not exists."""
-        from coco_b.core.heartbeat_manager import HeartbeatManager
+        from skillforge.core.heartbeat_manager import HeartbeatManager
         from pathlib import Path
         
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -128,7 +128,7 @@ class TestHeartbeatConfiguration:
 
     def test_get_user_config_creates_default(self):
         """Should create default config if not exists."""
-        from coco_b.core.heartbeat_manager import HeartbeatManager, HeartbeatType
+        from skillforge.core.heartbeat_manager import HeartbeatManager, HeartbeatType
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = HeartbeatManager(data_dir=tmpdir)
@@ -141,7 +141,7 @@ class TestHeartbeatConfiguration:
 
     def test_enable_heartbeat(self):
         """Should enable heartbeat for user."""
-        from coco_b.core.heartbeat_manager import HeartbeatManager, HeartbeatType
+        from skillforge.core.heartbeat_manager import HeartbeatManager, HeartbeatType
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = HeartbeatManager(data_dir=tmpdir)
@@ -154,7 +154,7 @@ class TestHeartbeatConfiguration:
 
     def test_enable_heartbeat_custom_time(self):
         """Should enable heartbeat with custom schedule time."""
-        from coco_b.core.heartbeat_manager import HeartbeatManager, HeartbeatType
+        from skillforge.core.heartbeat_manager import HeartbeatManager, HeartbeatType
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = HeartbeatManager(data_dir=tmpdir)
@@ -167,7 +167,7 @@ class TestHeartbeatConfiguration:
 
     def test_disable_heartbeat(self):
         """Should disable heartbeat for user."""
-        from coco_b.core.heartbeat_manager import HeartbeatManager, HeartbeatType
+        from skillforge.core.heartbeat_manager import HeartbeatManager, HeartbeatType
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = HeartbeatManager(data_dir=tmpdir)
@@ -180,7 +180,7 @@ class TestHeartbeatConfiguration:
 
     def test_get_enabled_heartbeats(self):
         """Should return list of enabled heartbeats."""
-        from coco_b.core.heartbeat_manager import HeartbeatManager, HeartbeatType
+        from skillforge.core.heartbeat_manager import HeartbeatManager, HeartbeatType
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = HeartbeatManager(data_dir=tmpdir)
@@ -197,7 +197,7 @@ class TestHeartbeatConfiguration:
 
     def test_config_persistence(self):
         """Should persist config across manager instances."""
-        from coco_b.core.heartbeat_manager import HeartbeatManager, HeartbeatType
+        from skillforge.core.heartbeat_manager import HeartbeatManager, HeartbeatType
         
         with tempfile.TemporaryDirectory() as tmpdir:
             # First instance - enable heartbeat
@@ -217,7 +217,7 @@ class TestHeartbeatGeneration:
     @pytest.mark.asyncio
     async def test_generate_morning_brief(self):
         """Should generate morning brief content."""
-        from coco_b.core.heartbeat_manager import HeartbeatManager
+        from skillforge.core.heartbeat_manager import HeartbeatManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = HeartbeatManager(data_dir=tmpdir)
@@ -232,7 +232,7 @@ class TestHeartbeatGeneration:
     @pytest.mark.asyncio
     async def test_generate_daily_summary(self):
         """Should generate daily summary content."""
-        from coco_b.core.heartbeat_manager import HeartbeatManager
+        from skillforge.core.heartbeat_manager import HeartbeatManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = HeartbeatManager(data_dir=tmpdir)
@@ -245,7 +245,7 @@ class TestHeartbeatGeneration:
     @pytest.mark.asyncio
     async def test_generate_deadline_watch_no_deadlines(self):
         """Should return None when no deadlines."""
-        from coco_b.core.heartbeat_manager import HeartbeatManager
+        from skillforge.core.heartbeat_manager import HeartbeatManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = HeartbeatManager(data_dir=tmpdir)
@@ -257,7 +257,7 @@ class TestHeartbeatGeneration:
     @pytest.mark.asyncio
     async def test_generate_unusual_activity_none(self):
         """Should return None when no unusual activity."""
-        from coco_b.core.heartbeat_manager import HeartbeatManager
+        from skillforge.core.heartbeat_manager import HeartbeatManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = HeartbeatManager(data_dir=tmpdir)
@@ -273,7 +273,7 @@ class TestHeartbeatSending:
     @pytest.mark.asyncio
     async def test_send_heartbeat_no_handler(self):
         """Should fail if no message handler set."""
-        from coco_b.core.heartbeat_manager import HeartbeatManager, HeartbeatType
+        from skillforge.core.heartbeat_manager import HeartbeatManager, HeartbeatType
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = HeartbeatManager(data_dir=tmpdir)
@@ -286,7 +286,7 @@ class TestHeartbeatSending:
     @pytest.mark.asyncio
     async def test_send_heartbeat_success(self):
         """Should send heartbeat via message handler."""
-        from coco_b.core.heartbeat_manager import HeartbeatManager, HeartbeatType
+        from skillforge.core.heartbeat_manager import HeartbeatManager, HeartbeatType
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = HeartbeatManager(data_dir=tmpdir)
@@ -310,7 +310,7 @@ class TestHeartbeatSending:
     @pytest.mark.asyncio
     async def test_send_heartbeat_updates_last_sent(self):
         """Should update last_sent timestamp."""
-        from coco_b.core.heartbeat_manager import HeartbeatManager, HeartbeatType
+        from skillforge.core.heartbeat_manager import HeartbeatManager, HeartbeatType
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = HeartbeatManager(data_dir=tmpdir)
@@ -331,7 +331,7 @@ class TestHeartbeatScheduler:
     @pytest.mark.asyncio
     async def test_start_stop(self):
         """Should start and stop scheduler."""
-        from coco_b.core.heartbeat_manager import HeartbeatManager
+        from skillforge.core.heartbeat_manager import HeartbeatManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = HeartbeatManager(data_dir=tmpdir)
@@ -348,7 +348,7 @@ class TestHeartbeatScheduler:
     @pytest.mark.asyncio
     async def test_scheduler_checks_heartbeats(self):
         """Scheduler should check and send due heartbeats."""
-        from coco_b.core.heartbeat_manager import HeartbeatManager, HeartbeatType
+        from skillforge.core.heartbeat_manager import HeartbeatManager, HeartbeatType
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = HeartbeatManager(data_dir=tmpdir)
@@ -376,7 +376,7 @@ class TestHeartbeatUtilities:
 
     def test_get_status(self):
         """Should return correct status."""
-        from coco_b.core.heartbeat_manager import HeartbeatManager, HeartbeatType
+        from skillforge.core.heartbeat_manager import HeartbeatManager, HeartbeatType
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = HeartbeatManager(data_dir=tmpdir)
@@ -393,7 +393,7 @@ class TestHeartbeatUtilities:
 
     def test_set_message_handler(self):
         """Should set message handler."""
-        from coco_b.core.heartbeat_manager import HeartbeatManager
+        from skillforge.core.heartbeat_manager import HeartbeatManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = HeartbeatManager(data_dir=tmpdir)

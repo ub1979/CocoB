@@ -2,7 +2,7 @@
 name: google-search
 description: Search Google using Playwright browser
 emoji: 🔍
-user_invocable: true
+user_invocable: false
 ---
 
 # Google Search Skill

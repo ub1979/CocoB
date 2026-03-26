@@ -1,6 +1,6 @@
 # LLM Providers Documentation
 
-This document covers the multi-provider LLM framework used by mr_bot.
+This document covers the multi-provider LLM framework used by SkillForge.
 
 ## Table of Contents
 
@@ -101,7 +101,7 @@ CLI providers are the **most secure option** for subscription users because:
 - ✅ No API keys to manage
 - ✅ Authentication handled by official CLI tools
 - ✅ Tokens managed by vendor (Google/Anthropic)
-- ✅ No credentials stored in mr_bot
+- ✅ No credentials stored in SkillForge
 
 **Recommended for:**
 - Claude Pro/Max subscribers → Use `claude-cli`
@@ -686,7 +686,7 @@ npm install -g @google/gemini-cli
 # Login with your Google account
 python -m core.llm.auth login gemini
 # Browser opens for Google OAuth consent
-# Tokens saved to ~/.mr_bot/credentials.json
+# Tokens saved to ~/.skillforge/credentials.json
 ```
 
 ```python

@@ -1,7 +1,7 @@
 {
-  "name": "mr_bot-whatsapp-service",
+  "name": "skillforge-whatsapp-service",
   "version": "1.0.0",
-  "description": "Secure WhatsApp Web service using Baileys for mr_bot",
+  "description": "Secure WhatsApp Web service using Baileys for SkillForge",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -21,8 +21,8 @@
     "whatsapp",
     "baileys",
     "bot",
-    "mr_bot"
+    "skillforge"
   ],
-  "author": "mr_bot",
+  "author": "skillforge",
   "license": "MIT"
 }

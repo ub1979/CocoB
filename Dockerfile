@@ -1,11 +1,11 @@
 # =============================================================================
-# Dockerfile — coco B AI Assistant
+# Dockerfile — SkillForge AI Assistant
 # =============================================================================
 # Multi-stage build: dependencies → runtime
 #
 # Usage:
-#   docker build -t coco-b .
-#   docker run -v ./data:/app/data -v ./config.py:/app/config.py coco-b gradio
+#   docker build -t skillforge .
+#   docker run -v ./data:/app/data -v ./config.py:/app/config.py skillforge gradio
 # =============================================================================
 
 # ---------------------------------------------------------------------------
@@ -62,5 +62,5 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
     CMD curl -f http://localhost:7777/ || exit 1
 
 # Default: run Gradio UI (override with docker run ... telegram/discord/etc)
-ENTRYPOINT ["coco-b"]
+ENTRYPOINT ["skillforge"]
 CMD ["gradio"]

@@ -1,4 +1,4 @@
-# Contributing to coco B
+# Contributing to SkillForge
 
 First off, thanks for taking the time to contribute! All types of contributions are encouraged and valued. See the [Table of Contents](#table-of-contents) for different ways to help and details about how this project handles them.
 
@@ -33,12 +33,12 @@ This project and everyone participating in it is governed by a commitment to mak
 1. **Fork** the repository on GitHub
 2. **Clone** your fork locally:
    ```bash
-   git clone https://github.com/<your-username>/CocoB.git
-   cd CocoB
+   git clone https://github.com/<your-username>/SkillForge.git
+   cd SkillForge
    ```
 3. **Add the upstream remote** so you can keep your fork in sync:
    ```bash
-   git remote add upstream https://github.com/ub1979/CocoB.git
+   git remote add upstream https://github.com/ub1979/SkillForge.git
    ```
 
 ## Development Setup
@@ -75,8 +75,8 @@ At minimum, configure an LLM provider (Ollama is the easiest for local developme
 ## Project Structure
 
 ```
-CocoB/
-├── src/coco_b/               # Main Python package
+SkillForge/
+├── src/skillforge/               # Main Python package
 │   ├── core/                  # Core modules (router, sessions, handlers, etc.)
 │   │   ├── router.py          # Central message orchestrator
 │   │   ├── llm/               # LLM provider framework
@@ -96,7 +96,7 @@ For detailed architecture, see [docs/read_me_claude.md](docs/read_me_claude.md) 
 
 ### Reporting Bugs
 
-Before creating a bug report, please check [existing issues](https://github.com/ub1979/CocoB/issues) to avoid duplicates.
+Before creating a bug report, please check [existing issues](https://github.com/ub1979/SkillForge/issues) to avoid duplicates.
 
 When filing a bug report, please include:
 
@@ -126,7 +126,7 @@ Not sure where to start? Look for issues labeled:
 
 ### Adding a Skill
 
-Skills are the easiest way to extend coco B. They're just markdown files with YAML frontmatter:
+Skills are the easiest way to extend SkillForge. They're just markdown files with YAML frontmatter:
 
 1. Create `skills/my-skill/SKILL.md`:
    ```yaml
@@ -149,12 +149,12 @@ Skills are the easiest way to extend coco B. They're just markdown files with YA
 
 ### Adding a Handler
 
-Handlers process code blocks from LLM responses (e.g., `` ```schedule``` ``, `` ```todo``` ``). Follow the pattern in `src/coco_b/core/schedule_handler.py`:
+Handlers process code blocks from LLM responses (e.g., `` ```schedule``` ``, `` ```todo``` ``). Follow the pattern in `src/skillforge/core/schedule_handler.py`:
 
-1. Create `src/coco_b/core/my_handler.py` with:
+1. Create `src/skillforge/core/my_handler.py` with:
    - A regex pattern to detect your blocks
    - `has_commands()`, `extract_commands()`, `execute_commands()` methods
-2. Wire it into `src/coco_b/core/router.py`:
+2. Wire it into `src/skillforge/core/router.py`:
    - Import and initialize in `__init__`
    - Add processing in section 7.x of both `handle_message` and `handle_message_stream`
 3. Write tests in `tests/test_my_handler.py`
@@ -168,7 +168,7 @@ Handlers process code blocks from LLM responses (e.g., `` ```schedule``` ``, `` 
 - Keep functions focused — one function, one responsibility
 - Use `logging` instead of `print()` for new code (existing code uses `print()`)
 - Use `datetime.now(tz=timezone.utc)` instead of `datetime.utcnow()` (deprecated)
-- For project root paths: `from coco_b import PROJECT_ROOT`
+- For project root paths: `from skillforge import PROJECT_ROOT`
 
 ### Commits
 
@@ -200,7 +200,7 @@ python -m pytest tests/test_user_permissions.py -v
 python -m pytest tests/test_router.py::TestRouterInit -v
 
 # Run with coverage (if installed)
-python -m pytest tests/ --cov=coco_b --cov-report=term-missing
+python -m pytest tests/ --cov=skillforge --cov-report=term-missing
 ```
 
 ### Writing Tests
@@ -211,7 +211,7 @@ python -m pytest tests/ --cov=coco_b --cov-report=term-missing
 - Use `MagicMock` / `AsyncMock` for external dependencies (LLM, MCP, etc.)
 - When testing with a router, override the permission manager to use a temp directory:
   ```python
-  from coco_b.core.user_permissions import PermissionManager
+  from skillforge.core.user_permissions import PermissionManager
   r._permission_manager = PermissionManager(data_dir=tmp_path / "perm_data")
   ```
 
@@ -266,8 +266,8 @@ The project currently has **989+ tests** covering:
 
 ## License
 
-By contributing to coco B, you agree that your contributions will be licensed under the [MIT License](LICENSE).
+By contributing to SkillForge, you agree that your contributions will be licensed under the [MIT License](LICENSE).
 
 ---
 
-Thank you for helping make coco B better! Every contribution, no matter how small, makes a difference.
+Thank you for helping make SkillForge better! Every contribution, no matter how small, makes a difference.

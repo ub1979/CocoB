@@ -1,6 +1,6 @@
 ---
 name: Skill Request
-about: Suggest a new skill for coco B
+about: Suggest a new skill for SkillForge
 title: '[Skill] '
 labels: skill-request
 assignees: ''

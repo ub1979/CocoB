@@ -1,6 +1,6 @@
-# coco B vs OpenClaw.ai — Feature Comparison
+# SkillForge vs OpenClaw.ai — Feature Comparison
 
-> What OpenClaw has that coco B doesn't. Last updated: 2026-02-24.
+> What OpenClaw has that SkillForge doesn't. Last updated: 2026-02-24.
 
 ---
 
@@ -29,7 +29,7 @@
 
 ---
 
-## Agent Tools coco B Lacks
+## Agent Tools SkillForge Lacks
 
 | Feature | What It Does |
 |---------|-------------|
@@ -56,7 +56,7 @@
 
 ---
 
-## Channels coco B Doesn't Have
+## Channels SkillForge Doesn't Have
 
 | Channel | Protocol |
 |---------|----------|
@@ -65,7 +65,7 @@
 | Google Chat | Google Chat API |
 | Matrix | Matrix protocol |
 | Zalo | Zalo API |
-| WebChat (built-in) | Native web client (coco B uses Gradio instead) |
+| WebChat (built-in) | Native web client (SkillForge uses Gradio instead) |
 
 ---
 
@@ -78,13 +78,13 @@
 | **Cloudflare Workers** | Serverless via `cloudflare/moltworker` |
 | **Headless Linux** | With separate device nodes pairing remotely |
 
-coco B runs as a Python process with `pip install -e .` only.
+SkillForge runs as a Python process with `pip install -e .` only.
 
 ---
 
 ## ClawHub Server-Side Features
 
-coco B's ClawHub integration is a client that searches and installs. OpenClaw's registry also supports:
+SkillForge's ClawHub integration is a client that searches and installs. OpenClaw's registry also supports:
 
 | Feature | Details |
 |---------|---------|

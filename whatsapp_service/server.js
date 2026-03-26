@@ -189,7 +189,8 @@ async function connectWhatsApp() {
 
                 // Forward to webhook if configured
                 if (webhookUrl) {
-                    await forwardToWebhook({
+                    const messageType = detectMessageType(msg);
+                    const webhookPayload = {
                         messageId: msg.key.id,
                         chatId,
                         senderId: senderId.replace('@s.whatsapp.net', '').replace('@g.us', ''),
@@ -198,9 +199,18 @@ async function connectWhatsApp() {
                         isSelfChat,
                         fromMe: msg.key.fromMe,
                         content: messageContent,
+                        messageType,
                         timestamp: msg.messageTimestamp,
                         raw: msg,
-                    });
+                    };
+
+                    // For image messages, include mimetype and caption
+                    if (messageType === 'image' && msg.message.imageMessage) {
+                        webhookPayload.imageMimetype = msg.message.imageMessage.mimetype || 'image/jpeg';
+                        webhookPayload.imageCaption = msg.message.imageMessage.caption || '';
+                    }
+
+                    await forwardToWebhook(webhookPayload);
                 }
             }
         });
@@ -223,7 +233,8 @@ function extractMessageContent(msg) {
 
     if (m.conversation) return m.conversation;
     if (m.extendedTextMessage?.text) return m.extendedTextMessage.text;
-    if (m.imageMessage?.caption) return `[Image] ${m.imageMessage.caption}`;
+    if (m.imageMessage?.caption) return m.imageMessage.caption || '[Image]';
+    if (m.imageMessage) return '[Image]';
     if (m.videoMessage?.caption) return `[Video] ${m.videoMessage.caption}`;
     if (m.documentMessage?.caption) return `[Document] ${m.documentMessage.caption}`;
     if (m.audioMessage) return '[Audio Message]';
@@ -232,6 +243,21 @@ function extractMessageContent(msg) {
     if (m.locationMessage) return '[Location]';
 
     return null;
+}
+
+/**
+ * Detect message type for webhook payload
+ */
+function detectMessageType(msg) {
+    const m = msg.message;
+    if (m.imageMessage) return 'image';
+    if (m.videoMessage) return 'video';
+    if (m.audioMessage) return 'audio';
+    if (m.documentMessage) return 'document';
+    if (m.stickerMessage) return 'sticker';
+    if (m.contactMessage) return 'contact';
+    if (m.locationMessage) return 'location';
+    return 'text';
 }
 
 /**
@@ -365,6 +391,72 @@ app.post('/send', async (req, res) => {
 });
 
 /**
+ * POST /send-media - Send an image/media message
+ * Body: { to: "1234567890", chatId: "...@s.whatsapp.net",
+ *         image: "<base64>", imageUrl: "https://...",
+ *         mimetype: "image/png", caption: "optional caption" }
+ *
+ * Either `image` (base64 string) or `imageUrl` (URL) must be provided.
+ * `to` or `chatId` identifies the recipient (same logic as /send).
+ */
+app.post('/send-media', async (req, res) => {
+    const { to, chatId, image, imageUrl, mimetype, caption } = req.body;
+
+    // Resolve recipient
+    let recipient = chatId;
+    if (!recipient && to) {
+        recipient = to.replace(/[^0-9]/g, '') + '@s.whatsapp.net';
+    }
+
+    if (!recipient) {
+        return res.status(400).json({ error: 'Missing required field: to or chatId' });
+    }
+
+    if (!image && !imageUrl) {
+        return res.status(400).json({ error: 'Missing required field: image (base64) or imageUrl' });
+    }
+
+    if (connectionState !== 'connected' || !sock) {
+        return res.status(503).json({ error: 'WhatsApp not connected', status: connectionState });
+    }
+
+    if (!sock.user) {
+        return res.status(503).json({ error: 'WhatsApp connection stale', status: 'stale' });
+    }
+
+    try {
+        let messageContent;
+
+        if (image) {
+            // base64-encoded image
+            const buffer = Buffer.from(image, 'base64');
+            messageContent = {
+                image: buffer,
+                mimetype: mimetype || 'image/png',
+            };
+        } else {
+            // URL-based image — Baileys can send from URL
+            messageContent = {
+                image: { url: imageUrl },
+                mimetype: mimetype || 'image/png',
+            };
+        }
+
+        if (caption) {
+            messageContent.caption = caption;
+        }
+
+        logger.info(`[SEND-MEDIA] Sending image to ${recipient}`);
+        const result = await sock.sendMessage(recipient, messageContent);
+        logger.info(`[SEND-MEDIA] Success! MessageId: ${result?.key?.id || 'unknown'}`);
+        res.json({ success: true, to: recipient, messageId: result?.key?.id });
+    } catch (error) {
+        logger.error('[SEND-MEDIA] Failed:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
  * POST /webhook - Configure webhook URL
  * Body: { url: "http://localhost:3978/whatsapp/webhook" }
  */
@@ -430,6 +522,65 @@ app.post('/reconnect', async (req, res) => {
     connectWhatsApp();
 
     res.json({ success: true, message: 'Reconnecting...' });
+});
+
+/**
+ * POST /download-media - Download media from a message
+ * Body: { messageKey: { remoteJid, id, fromMe, participant }, messageType: "image" }
+ * Returns: base64-encoded media data with mimetype
+ */
+app.post('/download-media', async (req, res) => {
+    const { messageKey, messageType } = req.body;
+
+    if (!messageKey || !messageType) {
+        return res.status(400).json({
+            error: 'Missing required fields: messageKey and messageType'
+        });
+    }
+
+    if (connectionState !== 'connected' || !sock) {
+        return res.status(503).json({
+            error: 'WhatsApp not connected',
+            status: connectionState
+        });
+    }
+
+    try {
+        // Reconstruct the message to download media
+        const { downloadMediaMessage } = require('@whiskeysockets/baileys');
+
+        // We need the raw message — retrieve it from the store or via the provided data
+        const rawMsg = req.body.rawMessage;
+        if (!rawMsg || !rawMsg.message) {
+            return res.status(400).json({
+                error: 'rawMessage with message content is required for media download'
+            });
+        }
+
+        const buffer = await downloadMediaMessage(
+            rawMsg,
+            'buffer',
+            {},
+            {
+                logger,
+                reuploadRequest: sock.updateMediaMessage,
+            }
+        );
+
+        const mimetype = rawMsg.message?.imageMessage?.mimetype ||
+                         rawMsg.message?.documentMessage?.mimetype ||
+                         'application/octet-stream';
+
+        res.json({
+            success: true,
+            data: buffer.toString('base64'),
+            mimetype,
+            size: buffer.length,
+        });
+    } catch (error) {
+        logger.error('Media download error:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
 /**

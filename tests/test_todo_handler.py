@@ -7,7 +7,7 @@ import json
 import tempfile
 import shutil
 from pathlib import Path
-from coco_b.core.todo_handler import TodoCommandHandler
+from skillforge.core.todo_handler import TodoCommandHandler
 
 
 @pytest.fixture

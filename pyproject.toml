@@ -3,9 +3,9 @@ requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "coco-b"
+name = "skillforge"
 version = "1.0.0"
-description = "coco B — AI assistant with persistent memory"
+description = "SkillForge — AI assistant with persistent memory"
 license = {text = "MIT"}
 requires-python = ">=3.10"
 dependencies = [
@@ -27,11 +27,11 @@ teams = ["botbuilder-core>=4.15.0", "botbuilder-schema>=4.15.0", "flask-limiter>
 memory = ["chromadb>=0.4.0"]
 whatsapp = ["qrcode[pil]>=7.4.2"]
 ui = ["flet>=0.27.0"]
-all = ["coco-b[gradio,telegram,discord,slack,teams,memory,whatsapp,ui]"]
+all = ["skillforge[gradio,telegram,discord,slack,teams,memory,whatsapp,ui]"]
 dev = ["pytest>=7.0", "pytest-asyncio>=0.21"]
 
 [project.scripts]
-coco-b = "coco_b.__main__:main"
+skillforge = "skillforge.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

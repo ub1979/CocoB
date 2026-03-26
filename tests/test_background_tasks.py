@@ -15,7 +15,7 @@ class TestTaskStatus:
 
     def test_status_values(self):
         """All statuses should have correct values."""
-        from coco_b.core.background_tasks import TaskStatus
+        from skillforge.core.background_tasks import TaskStatus
         
         assert TaskStatus.PENDING.value == "pending"
         assert TaskStatus.RUNNING.value == "running"
@@ -29,7 +29,7 @@ class TestTaskType:
 
     def test_task_types_defined(self):
         """All task types should be defined."""
-        from coco_b.core.background_tasks import TaskType
+        from skillforge.core.background_tasks import TaskType
         
         assert TaskType.HEALTH_MONITOR == "health_monitor"
         assert TaskType.DATA_SYNC == "data_sync"
@@ -38,7 +38,7 @@ class TestTaskType:
 
     def test_all_types_list(self):
         """ALL_TYPES should contain all types."""
-        from coco_b.core.background_tasks import TaskType
+        from skillforge.core.background_tasks import TaskType
         
         assert len(TaskType.ALL_TYPES) == 4
 
@@ -48,7 +48,7 @@ class TestBackgroundTask:
 
     def test_task_creation(self):
         """Should create task with defaults."""
-        from coco_b.core.background_tasks import BackgroundTask
+        from skillforge.core.background_tasks import BackgroundTask
         
         task = BackgroundTask(
             task_id="test123",
@@ -64,7 +64,7 @@ class TestBackgroundTask:
 
     def test_is_active(self):
         """Should correctly determine if task is active."""
-        from coco_b.core.background_tasks import BackgroundTask, TaskStatus
+        from skillforge.core.background_tasks import BackgroundTask, TaskStatus
         
         task = BackgroundTask(
             task_id="test",
@@ -82,7 +82,7 @@ class TestBackgroundTask:
 
     def test_is_due_interval(self):
         """Should correctly determine if interval task is due."""
-        from coco_b.core.background_tasks import BackgroundTask
+        from skillforge.core.background_tasks import BackgroundTask
         
         task = BackgroundTask(
             task_id="test",
@@ -101,7 +101,7 @@ class TestBackgroundTask:
 
     def test_is_due_scheduled(self):
         """Should correctly determine if scheduled task is due."""
-        from coco_b.core.background_tasks import BackgroundTask
+        from skillforge.core.background_tasks import BackgroundTask
         
         current_time = datetime.now().strftime("%H:%M")
         task = BackgroundTask(
@@ -117,7 +117,7 @@ class TestBackgroundTask:
 
     def test_to_dict(self):
         """Should convert to dictionary."""
-        from coco_b.core.background_tasks import BackgroundTask
+        from skillforge.core.background_tasks import BackgroundTask
         
         task = BackgroundTask(
             task_id="test",
@@ -132,7 +132,7 @@ class TestBackgroundTask:
 
     def test_from_dict(self):
         """Should create from dictionary."""
-        from coco_b.core.background_tasks import BackgroundTask
+        from skillforge.core.background_tasks import BackgroundTask
         
         data = {
             "task_id": "test",
@@ -154,7 +154,7 @@ class TestTaskResult:
 
     def test_result_creation(self):
         """Should create result."""
-        from coco_b.core.background_tasks import TaskResult
+        from skillforge.core.background_tasks import TaskResult
         
         result = TaskResult(
             task_id="test",
@@ -172,7 +172,7 @@ class TestBackgroundTaskRunnerInitialization:
 
     def test_initialization(self):
         """Should initialize with empty state."""
-        from coco_b.core.background_tasks import BackgroundTaskRunner
+        from skillforge.core.background_tasks import BackgroundTaskRunner
         
         with tempfile.TemporaryDirectory() as tmpdir:
             runner = BackgroundTaskRunner(data_dir=tmpdir)
@@ -183,7 +183,7 @@ class TestBackgroundTaskRunnerInitialization:
 
     def test_creates_data_directory(self):
         """Should create data directory."""
-        from coco_b.core.background_tasks import BackgroundTaskRunner
+        from skillforge.core.background_tasks import BackgroundTaskRunner
         
         with tempfile.TemporaryDirectory() as tmpdir:
             data_dir = Path(tmpdir) / "tasks"
@@ -197,7 +197,7 @@ class TestTaskManagement:
 
     def test_create_task(self):
         """Should create a new task."""
-        from coco_b.core.background_tasks import BackgroundTaskRunner, TaskType
+        from skillforge.core.background_tasks import BackgroundTaskRunner, TaskType
         
         with tempfile.TemporaryDirectory() as tmpdir:
             runner = BackgroundTaskRunner(data_dir=tmpdir)
@@ -217,7 +217,7 @@ class TestTaskManagement:
 
     def test_create_task_invalid_type(self):
         """Should reject invalid task type."""
-        from coco_b.core.background_tasks import BackgroundTaskRunner
+        from skillforge.core.background_tasks import BackgroundTaskRunner
         
         with tempfile.TemporaryDirectory() as tmpdir:
             runner = BackgroundTaskRunner(data_dir=tmpdir)
@@ -233,7 +233,7 @@ class TestTaskManagement:
 
     def test_get_task(self):
         """Should retrieve task by ID."""
-        from coco_b.core.background_tasks import BackgroundTaskRunner, TaskType
+        from skillforge.core.background_tasks import BackgroundTaskRunner, TaskType
         
         with tempfile.TemporaryDirectory() as tmpdir:
             runner = BackgroundTaskRunner(data_dir=tmpdir)
@@ -251,7 +251,7 @@ class TestTaskManagement:
 
     def test_get_all_tasks(self):
         """Should return all tasks."""
-        from coco_b.core.background_tasks import BackgroundTaskRunner, TaskType
+        from skillforge.core.background_tasks import BackgroundTaskRunner, TaskType
         
         with tempfile.TemporaryDirectory() as tmpdir:
             runner = BackgroundTaskRunner(data_dir=tmpdir)
@@ -266,7 +266,7 @@ class TestTaskManagement:
 
     def test_get_active_tasks(self):
         """Should return only active tasks."""
-        from coco_b.core.background_tasks import BackgroundTaskRunner, TaskType, TaskStatus
+        from skillforge.core.background_tasks import BackgroundTaskRunner, TaskType, TaskStatus
         
         with tempfile.TemporaryDirectory() as tmpdir:
             runner = BackgroundTaskRunner(data_dir=tmpdir)
@@ -285,7 +285,7 @@ class TestTaskManagement:
 
     def test_update_task(self):
         """Should update task fields."""
-        from coco_b.core.background_tasks import BackgroundTaskRunner, TaskType
+        from skillforge.core.background_tasks import BackgroundTaskRunner, TaskType
         
         with tempfile.TemporaryDirectory() as tmpdir:
             runner = BackgroundTaskRunner(data_dir=tmpdir)
@@ -310,7 +310,7 @@ class TestTaskManagement:
 
     def test_delete_task(self):
         """Should delete task."""
-        from coco_b.core.background_tasks import BackgroundTaskRunner, TaskType
+        from skillforge.core.background_tasks import BackgroundTaskRunner, TaskType
         
         with tempfile.TemporaryDirectory() as tmpdir:
             runner = BackgroundTaskRunner(data_dir=tmpdir)
@@ -328,7 +328,7 @@ class TestTaskManagement:
 
     def test_pause_resume_task(self):
         """Should pause and resume tasks."""
-        from coco_b.core.background_tasks import BackgroundTaskRunner, TaskType, TaskStatus
+        from skillforge.core.background_tasks import BackgroundTaskRunner, TaskType, TaskStatus
         
         with tempfile.TemporaryDirectory() as tmpdir:
             runner = BackgroundTaskRunner(data_dir=tmpdir)
@@ -357,7 +357,7 @@ class TestTaskExecution:
     @pytest.mark.asyncio
     async def test_register_task_handler(self):
         """Should register task handler."""
-        from coco_b.core.background_tasks import BackgroundTaskRunner
+        from skillforge.core.background_tasks import BackgroundTaskRunner
         
         with tempfile.TemporaryDirectory() as tmpdir:
             runner = BackgroundTaskRunner(data_dir=tmpdir)
@@ -370,7 +370,7 @@ class TestTaskExecution:
     @pytest.mark.asyncio
     async def test_execute_task_with_handler(self):
         """Should execute task using registered handler."""
-        from coco_b.core.background_tasks import BackgroundTaskRunner, TaskType, BackgroundTask
+        from skillforge.core.background_tasks import BackgroundTaskRunner, TaskType, BackgroundTask
         
         with tempfile.TemporaryDirectory() as tmpdir:
             runner = BackgroundTaskRunner(data_dir=tmpdir)
@@ -394,7 +394,7 @@ class TestTaskExecution:
     @pytest.mark.asyncio
     async def test_execute_task_failure(self):
         """Should handle task execution failure."""
-        from coco_b.core.background_tasks import BackgroundTaskRunner, TaskType, BackgroundTask
+        from skillforge.core.background_tasks import BackgroundTaskRunner, TaskType, BackgroundTask
         
         with tempfile.TemporaryDirectory() as tmpdir:
             runner = BackgroundTaskRunner(data_dir=tmpdir)
@@ -417,7 +417,7 @@ class TestTaskExecution:
     @pytest.mark.asyncio
     async def test_run_task_now(self):
         """Should manually trigger task execution."""
-        from coco_b.core.background_tasks import BackgroundTaskRunner, TaskType
+        from skillforge.core.background_tasks import BackgroundTaskRunner, TaskType
         
         with tempfile.TemporaryDirectory() as tmpdir:
             runner = BackgroundTaskRunner(data_dir=tmpdir)
@@ -442,7 +442,7 @@ class TestTaskScheduler:
     @pytest.mark.asyncio
     async def test_start_stop(self):
         """Should start and stop scheduler."""
-        from coco_b.core.background_tasks import BackgroundTaskRunner
+        from skillforge.core.background_tasks import BackgroundTaskRunner
         
         with tempfile.TemporaryDirectory() as tmpdir:
             runner = BackgroundTaskRunner(data_dir=tmpdir)
@@ -461,7 +461,7 @@ class TestTaskResults:
 
     def test_get_task_results(self):
         """Should return task results."""
-        from coco_b.core.background_tasks import BackgroundTaskRunner, TaskType
+        from skillforge.core.background_tasks import BackgroundTaskRunner, TaskType
         
         with tempfile.TemporaryDirectory() as tmpdir:
             runner = BackgroundTaskRunner(data_dir=tmpdir)
@@ -484,7 +484,7 @@ class TestTaskResults:
 
     def test_get_task_results_with_limit(self):
         """Should respect result limit."""
-        from coco_b.core.background_tasks import BackgroundTaskRunner, TaskType
+        from skillforge.core.background_tasks import BackgroundTaskRunner, TaskType
         
         with tempfile.TemporaryDirectory() as tmpdir:
             runner = BackgroundTaskRunner(data_dir=tmpdir)
@@ -511,7 +511,7 @@ class TestTaskPersistence:
 
     def test_save_and_load_tasks(self):
         """Should persist tasks across instances."""
-        from coco_b.core.background_tasks import BackgroundTaskRunner, TaskType
+        from skillforge.core.background_tasks import BackgroundTaskRunner, TaskType
         
         with tempfile.TemporaryDirectory() as tmpdir:
             # First instance - create task
@@ -538,7 +538,7 @@ class TestTaskStatus:
 
     def test_get_status(self):
         """Should return correct status."""
-        from coco_b.core.background_tasks import BackgroundTaskRunner, TaskType
+        from skillforge.core.background_tasks import BackgroundTaskRunner, TaskType
         
         with tempfile.TemporaryDirectory() as tmpdir:
             runner = BackgroundTaskRunner(data_dir=tmpdir)
@@ -561,8 +561,8 @@ class TestTaskAuthorization:
 
     def test_create_task_requires_auth(self):
         """Should check auth when creating tasks."""
-        from coco_b.core.background_tasks import BackgroundTaskRunner, TaskType
-        from coco_b.core.auth_manager import AuthManager, SecurityLevel
+        from skillforge.core.background_tasks import BackgroundTaskRunner, TaskType
+        from skillforge.core.auth_manager import AuthManager, SecurityLevel
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth_dir = Path(tmpdir) / "auth"
@@ -594,8 +594,8 @@ class TestTaskAuthorization:
 
     def test_delete_task_requires_auth(self):
         """Should check auth when deleting tasks."""
-        from coco_b.core.background_tasks import BackgroundTaskRunner, TaskType
-        from coco_b.core.auth_manager import AuthManager
+        from skillforge.core.background_tasks import BackgroundTaskRunner, TaskType
+        from skillforge.core.auth_manager import AuthManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth_dir = Path(tmpdir) / "auth"

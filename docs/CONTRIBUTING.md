@@ -1,6 +1,6 @@
-# Contributing to coco B
+# Contributing to SkillForge
 
-Thank you for your interest in contributing to **coco B**! This document provides guidelines and instructions for contributing to this open-source project.
+Thank you for your interest in contributing to **SkillForge**! This document provides guidelines and instructions for contributing to this open-source project.
 
 > 🤝 **Our Mission**: Making AI Useful for Everyone through open collaboration.
 
@@ -29,11 +29,11 @@ Thank you for your interest in contributing to **coco B**! This document provide
 
 ```bash
 # Fork the repository on GitHub, then clone your fork
-git clone https://github.com/YOUR-USERNAME/coco B.git
-cd coco B
+git clone https://github.com/YOUR-USERNAME/SkillForge.git
+cd SkillForge
 
 # Add upstream remote
-git remote add upstream https://github.com/ORIGINAL-OWNER/coco B.git
+git remote add upstream https://github.com/ORIGINAL-OWNER/SkillForge.git
 ```
 
 ### 2. Set Up Development Environment
@@ -101,7 +101,7 @@ We use a specific comment format for consistency:
     
     Done by : Your Name
     
-    Project : coco B - Persistent Memory AI Chatbot
+    Project : SkillForge - Persistent Memory AI Chatbot
 '''
 # =============================================================================
 
@@ -389,9 +389,9 @@ Violations may result in:
 
 ## 🙏 Thank You!
 
-Your contributions make coco B better for everyone. We appreciate your time and effort!
+Your contributions make SkillForge better for everyone. We appreciate your time and effort!
 
-**Project**: coco B - Persistent Memory AI Chatbot  
+**Project**: SkillForge - Persistent Memory AI Chatbot  
 **Organization**: Idrak AI Ltd  
 **License**: Open Source - Safe Open Community Project  
 **Mission**: Making AI Useful for Everyone
