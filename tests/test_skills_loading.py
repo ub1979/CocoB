@@ -4,8 +4,8 @@
 
 import pytest
 from pathlib import Path
-from coco_b.core.skills.loader import parse_skill_file, find_skill_files
-from coco_b.core.skills.manager import SkillsManager
+from skillforge.core.skills.loader import parse_skill_file, find_skill_files
+from skillforge.core.skills.manager import SkillsManager
 
 
 SKILLS_DIR = Path(__file__).parent.parent / "skills"

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide covers deploying mr_bot to production environments. Follow these steps to ensure a secure, reliable deployment.
+This guide covers deploying SkillForge to production environments. Follow these steps to ensure a secure, reliable deployment.
 
 > 🚀 **Quick Deploy**: For testing, you can run locally. For production, follow this guide carefully.
 
@@ -15,7 +15,7 @@ This guide covers deploying mr_bot to production environments. Follow these step
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd mr_bot
+cd skillforge
 
 # Create virtual environment
 python -m venv venv
@@ -141,16 +141,16 @@ CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:3978", "bot:app"]
 
 ```bash
 # Build image
-docker build -t mr_bot:latest .
+docker build -t skillforge:latest .
 
 # Run container
 docker run -d \
-  --name mr_bot \
+  --name skillforge \
   -p 3978:3978 \
   -e FLASK_DEBUG=false \
   -e OPENAI_API_KEY="$OPENAI_API_KEY" \
   -v $(pwd)/data:/app/data \
-  mr_bot:latest
+  skillforge:latest
 ```
 
 ### Option 3: Docker Compose
@@ -161,9 +161,9 @@ docker run -d \
 version: '3.8'
 
 services:
-  mr_bot:
+  skillforge:
     build: .
-    container_name: mr_bot
+    container_name: skillforge
     restart: unless-stopped
     ports:
       - "3978:3978"
@@ -276,8 +276,8 @@ option_settings:
 
 2. Deploy:
 ```bash
-eb init -p python-3.11 mr_bot
-eb create mr_bot-env
+eb init -p python-3.11 skillforge
+eb create skillforge-env
 eb setenv FLASK_DEBUG=false OPENAI_API_KEY=your-key
 ```
 
@@ -285,11 +285,11 @@ eb setenv FLASK_DEBUG=false OPENAI_API_KEY=your-key
 
 ```bash
 # Build and push to Google Container Registry
-gcloud builds submit --tag gcr.io/PROJECT-ID/mr_bot
+gcloud builds submit --tag gcr.io/PROJECT-ID/skillforge
 
 # Deploy to Cloud Run
-gcloud run deploy mr_bot \
-  --image gcr.io/PROJECT-ID/mr_bot \
+gcloud run deploy skillforge \
+  --image gcr.io/PROJECT-ID/skillforge \
   --platform managed \
   --set-env-vars FLASK_DEBUG=false \
   --set-env-vars OPENAI_API_KEY=your-key
@@ -299,7 +299,7 @@ gcloud run deploy mr_bot \
 
 ```bash
 # Create Heroku app
-heroku create your-mr_bot-app
+heroku create your-skillforge-app
 
 # Set environment variables
 heroku config:set FLASK_DEBUG=false
@@ -346,7 +346,7 @@ args=(sys.stdout,)
 class=FileHandler
 level=INFO
 formatter=standard
-args=('logs/mr_bot.log',)
+args=('logs/skillforge.log',)
 
 [formatter_standard]
 format=%(asctime)s [%(levelname)s] %(name)s: %(message)s
@@ -387,9 +387,9 @@ chmod 600 data/sessions/*
 
 # Run as non-root user
 useradd -m botuser
-chown -R botuser:botuser /path/to/mr_bot
+chown -R botuser:botuser /path/to/skillforge
 su - botuser
-cd /path/to/mr_bot
+cd /path/to/skillforge
 ```
 
 ### Firewall Configuration
@@ -410,11 +410,11 @@ firewall-cmd --reload
 
 Create `/etc/fail2ban/jail.local`:
 ```ini
-[mr_bot]
+[skillforge]
 enabled = true
 port = http,https
-filter = mr_bot
-logpath = /path/to/mr_bot/logs/mr_bot.log
+filter = skillforge
+logpath = /path/to/skillforge/logs/skillforge.log
 maxretry = 5
 bantime = 3600
 ```
@@ -429,7 +429,7 @@ bantime = 3600
 #!/bin/bash
 # backup.sh - Run daily via cron
 
-BACKUP_DIR="/backups/mr_bot"
+BACKUP_DIR="/backups/skillforge"
 DATE=$(date +%Y%m%d_%H%M%S)
 
 # Backup session data
@@ -441,14 +441,14 @@ find $BACKUP_DIR -name "sessions_*.tar.gz" -mtime +30 -delete
 
 Add to crontab:
 ```bash
-0 2 * * * /path/to/mr_bot/backup.sh
+0 2 * * * /path/to/skillforge/backup.sh
 ```
 
 ### Recovery
 
 ```bash
 # Restore from backup
-tar -xzf backups/sessions_20260207_020000.tar.gz -C /path/to/mr_bot/
+tar -xzf backups/sessions_20260207_020000.tar.gz -C /path/to/skillforge/
 ```
 
 ---
@@ -485,7 +485,7 @@ python bot.py
 
 ---
 
-**Project**: mr_bot - Persistent Memory AI Chatbot  
+**Project**: SkillForge - Persistent Memory AI Chatbot
 **Organization**: Idrak AI Ltd  
 **License**: Open Source - Safe Open Community Project
 

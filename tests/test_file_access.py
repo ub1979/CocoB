@@ -6,7 +6,7 @@ import os
 import stat
 import pytest
 from pathlib import Path
-from coco_b.core.file_access import FileAccessManager
+from skillforge.core.file_access import FileAccessManager
 
 
 @pytest.fixture
@@ -97,7 +97,7 @@ class TestSandbox:
         assert fa.is_path_allowed("/etc/passwd") is False
 
     def test_src_dir_blocked(self, fa, tmp_path):
-        path = str(tmp_path / "src" / "coco_b" / "core" / "evil.py")
+        path = str(tmp_path / "src" / "skillforge" / "core" / "evil.py")
         assert fa.is_path_allowed(path) is False
 
 

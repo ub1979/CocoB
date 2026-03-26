@@ -9,9 +9,9 @@
 
 import pytest
 from unittest.mock import MagicMock, patch
-from coco_b.core.router import MessageRouter
-from coco_b.core.sessions import SessionManager
-from coco_b.core.file_access import FileAccessManager
+from skillforge.core.router import MessageRouter
+from skillforge.core.sessions import SessionManager
+from skillforge.core.file_access import FileAccessManager
 
 
 # =============================================================================
@@ -120,10 +120,10 @@ def make_router(tmp_path):
         # Redirect file-access manager to temp directory
         r._file_access = FileAccessManager(project_root=tmp_path)
         # Use isolated temp memory DB so tests don't share real data
-        from coco_b.core.memory import SQLiteMemory
+        from skillforge.core.memory import SQLiteMemory
         r.memory_store = SQLiteMemory(db_path=str(tmp_path / "test_memory.db"))
         # Disable permission system for integration tests (all users get full access)
-        from coco_b.core.user_permissions import PermissionManager
+        from skillforge.core.user_permissions import PermissionManager
         r._permission_manager = PermissionManager(data_dir=tmp_path / "perm_data")
         return r
 
@@ -761,7 +761,7 @@ class TestMCPServerManagement:
         llm = _make_mock_llm("ollama", "gemma3:1b")
         router = make_router(llm)
         # Point MCP manager to temp directory so it doesn't touch real config
-        from coco_b.core.mcp_manager import MCPManager as MCPServerManager
+        from skillforge.core.mcp_manager import MCPManager as MCPServerManager
         router._mcp_server_manager = MCPServerManager(
             project_root=tmp_path,
             auth_manager=None,  # No auth required for tests

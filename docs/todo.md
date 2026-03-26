@@ -1,4 +1,4 @@
-# coco B — Roadmap
+# SkillForge — Roadmap
 
 ## 1. Fix & Enable Semantic Memory ✅
 - [x] Replace ChromaDB (too slow) with SQLite FTS5 — zero dependencies, instant startup
@@ -36,9 +36,9 @@
 - [ ] Wire heartbeat generators to real skill outputs (email/calendar/todo skills → composed summary instead of placeholder templates)
 
 ## 5. One-Click Setup & Skill Marketplace
-- [x] Restructure to `src/coco_b/` package layout with `pyproject.toml`
+- [x] Restructure to `src/skillforge/` package layout with `pyproject.toml`
 - [x] `pip install -e .` replaces all `sys.path` hacks
-- [ ] Single CLI entry point (`coco-b start`)
+- [ ] Single CLI entry point (`skillforge start`)
 - [x] Skill marketplace — ClawHub integration (search/install from OpenClaw.ai registry)
 - [ ] Interactive first-run setup wizard
 - [x] Streamline MCP config auto-detection — auto-connect enabled servers at startup
@@ -75,22 +75,32 @@
 - [x] `.dockerignore` — exclude data/, .git/, node_modules/, tests/
 
 ### 10. Single CLI Entry Point ✅
-- [x] `coco-b` console script registered in pyproject.toml `[project.scripts]`
-- [x] `coco-b ui|gradio|bot|telegram|slack|discord` — all channel launchers
-- [x] `coco-b doctor` — check config, dependencies, core imports, skills
+- [x] `skillforge` console script registered in pyproject.toml `[project.scripts]`
+- [x] `skillforge ui|gradio|bot|telegram|slack|discord` — all channel launchers
+- [x] `skillforge doctor` — check config, dependencies, core imports, skills
 - [x] 8 tests in `tests/test_cli.py`
 
 ### 11. Flet UI Modular Refactor ✅
-- [x] Split 5,882-line `app.py` monolith into `src/coco_b/flet/` package (16 modular files)
+- [x] Split 5,882-line `app.py` monolith into `src/skillforge/flet/` package (16 modular files)
 - [x] `flet/theme.py` — AppColors, Spacing, provider dicts, utility functions
 - [x] `flet/storage.py` — SecureStorage for encrypted token/settings persistence
 - [x] `flet/components/` — ChatMessage (Markdown rendering), CollapsibleSection, StatusBadge, StyledButton, cards
 - [x] `flet/views/` — ChatView, SettingsView, ToolsView, MCPPanel, SkillsPanel, ClawHubPanel, HistoryView
 - [x] `flet/app.py` — thin orchestrator with 4-tab navigation (Chat, Tools, Settings, History)
 - [x] Navigation consolidated: 6 tabs → 4 tabs (MCP + Skills + ClawHub merged into Tools tab)
-- [x] Animated typing indicator (`ProgressRing` + "coco B is thinking...")
+- [x] Animated typing indicator (`ProgressRing` + "SkillForge is thinking...")
 - [x] Markdown rendering for assistant messages (`ft.Markdown`, GitHub Web, atom-one-dark)
 - [x] 15 new import tests in `TestFletImports` (862 total)
+
+### 11b. UI/UX Redesign ✅
+- [x] Settings card-grid navigation — 7 clickable icon cards (Appearance, Personas, Permissions, Channels, Scheduler, LLM Providers, Memory)
+- [x] Design system overhaul — new dark/light palettes, ACCENT color (#6366F1), SURFACE_ELEVATED, DIVIDER
+- [x] New reusable widgets: `SectionHeader`, `SubItemAccordion` (DRY refactor of 3× duplicated code)
+- [x] `CollapsibleSection` redesign with left accent bar and box shadow
+- [x] Status cards with left accent bars (green/muted)
+- [x] Chat focus fix — `/` commands no longer lose focus in web UI
+- [x] Flet 0.80+ deprecated API migration across all 12 UI files
+- [x] All 1313 tests passing
 
 ---
 
@@ -108,12 +118,25 @@
 - [ ] Warning message to user + optional auto-break
 - [ ] Tests in `tests/test_loop_detection.py`
 
-### 13. Image Analysis Tool
-- [ ] `/image` command — analyze images with multimodal LLM
-- [ ] Params: image path/URL, prompt, model override
-- [ ] Works with Anthropic, OpenAI, Gemini vision models
+### 13. Image/Vision Support ✅
+- [x] E-001: Core Image Infrastructure — `image_handler.py` with validation, storage, cleanup, base64 encoding (97 tests)
+- [x] E-002: LLM Provider Vision Support — `supports_vision` + `format_vision_messages()` on all 7 providers (36 tests)
+- [x] E-003: Router Integration — `handle_message`/`handle_message_stream` accept `attachments`, JSONL records, vision formatting, permission gating (20 tests)
+- [x] E-004: Channel Inbound — Telegram photo handler, WhatsApp image handler, Flet UI file picker (22 tests)
+- [x] E-005: Channel Outbound — Router `extract_outbound_images()`, Telegram `send_image()`, WhatsApp `send_image()`, Baileys `/send-media`, Flet inline rendering (36 tests)
+- [x] E-006: Image Generation — `image_gen_handler.py` code-block handler, MCP delegation, router wired (67 tests)
 
-### 14. Message Edit/Pin/React
+### 14. Admin Panel & Cross-Platform Identity ✅
+- [x] Login gate — password-protected Flet UI with PBKDF2-hashed admin credentials (6 tests)
+- [x] Admin dashboard — 5th nav tab: Users & Roles, Permission Requests, Identity Linking
+- [x] Cross-platform identity resolver — `identity_resolver.py`, map telegram/whatsapp/slack IDs to canonical users (8 tests)
+- [x] Permission request queue — `permission_requests.py`, submit/approve/deny flow (9 tests)
+- [x] New commands: `/request-permission`, `/my-requests`, `/pending-requests`, `/approve`, `/deny`, `/link-identity`
+- [x] Router identity resolution at top of handle_message / handle_message_stream
+- [x] Permission denial messages now hint at `/request-permission`
+- [x] Chat avatar uses `chat_icon.png`, app icon uses `icon/icon.png`
+
+### 15. Message Edit/Pin/React
 - [ ] Unified message tool: edit, delete, pin, unpin, react across channels
 - [ ] Channel adapter extensions for Discord, Slack, Telegram, Teams
 - [ ] Agent can manage messages programmatically
@@ -146,7 +169,7 @@
 ### 19. First-Run Setup Wizard
 - [ ] Interactive terminal prompts for LLM provider, API keys, channels
 - [ ] Auto-generate config.py from answers
-- [ ] `coco-b setup` or auto-detect on first `coco-b start`
+- [ ] `skillforge setup` or auto-detect on first `skillforge start`
 
 ### 20. New Channels
 - [ ] Signal (signal-cli or Signal API)
@@ -154,7 +177,7 @@
 - [ ] Matrix (matrix-nio)
 
 ### 21. ClawHub Publishing
-- [ ] `coco-b publish-skill <name>` — publish to ClawHub registry
+- [ ] `skillforge publish-skill <name>` — publish to ClawHub registry
 - [ ] Semantic vector search for skill discovery (embedding-based)
 - [ ] Starring & commenting on skills
 

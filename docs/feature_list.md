@@ -1,4 +1,4 @@
-# coco B — Complete Feature List
+# SkillForge — Complete Feature List
 
 > Every feature, command, config option, and integration — cataloged for tutorial reference.
 
@@ -72,7 +72,7 @@ LLMConfig(
 - **Supported**: Anthropic (Claude Pro/Max), Google Gemini (Google One AI Premium)
 - **Flow**: PKCE OAuth 2.0 with automatic browser redirect
 - **Token refresh**: Automatic with 5-minute buffer
-- **Credential storage**: `~/.mr_bot/credentials.json` (chmod 0600)
+- **Credential storage**: `~/.skillforge/credentials.json` (chmod 0600)
 - **CLI**: `python -m core.llm.auth login|status|logout <provider>`
 
 ### Think Levels (`/think`)
@@ -122,7 +122,7 @@ LLMConfig(
 
 ### Architecture
 - **3-tier hierarchy** (higher priority overrides lower):
-  1. **User skills**: `~/.mr_bot/skills/`
+  1. **User skills**: `~/.skillforge/skills/`
   2. **Project skills**: `./skills/`
   3. **Bundled skills**: `<package>/skills/`
 - **Format**: SKILL.md with YAML frontmatter + markdown instructions
@@ -260,7 +260,7 @@ Every minute, every 5/15 min, hourly, daily at 9am/6pm, weekly Monday, monthly 1
 ### Features
 - **Search**: 5,700+ community skills from OpenClaw.ai registry
 - **Install**: One-click download and install
-- **Format adapter**: Converts OpenClaw format to coco B SKILL.md
+- **Format adapter**: Converts OpenClaw format to SkillForge SKILL.md
 - **Tracking**: Installed skills tracked in `data/clawhub_installed.json`
 - **Updates**: Check for newer versions of installed skills
 - **Caching**: Search results cached for performance
@@ -320,7 +320,7 @@ MAX_CHARS: 5000
 - **Password hashing**: PBKDF2-HMAC-SHA256 with 600k iterations
 - **Webhook verification**: HMAC-SHA256 with constant-time comparison
 - **File access**: Sandboxed FileAccessManager with password protection
-- **Credential storage**: Encrypted at `~/.mr_bot/credentials.json` (chmod 0600)
+- **Credential storage**: Encrypted at `~/.skillforge/credentials.json` (chmod 0600)
 - **Config validation**: Warns about placeholder credentials, hardcoded keys, debug mode
 - **Path safety**: Defense-in-depth path checking for skill CRUD operations
 
@@ -416,16 +416,16 @@ docker compose --profile bot up      # MS Teams bot
 
 ---
 
-## 16. CLI Entry Point (`coco-b`)
+## 16. CLI Entry Point (`skillforge`)
 
 ```bash
-coco-b ui        # Flet desktop app
-coco-b gradio    # Gradio web UI at :7777
-coco-b bot       # MS Teams Flask server
-coco-b telegram  # Telegram bot
-coco-b slack     # Slack bot
-coco-b discord   # Discord bot
-coco-b doctor    # Health check (config, imports, deps, skills)
+skillforge ui        # Flet desktop app
+skillforge gradio    # Gradio web UI at :7777
+skillforge bot       # MS Teams Flask server
+skillforge telegram  # Telegram bot
+skillforge slack     # Slack bot
+skillforge discord   # Discord bot
+skillforge doctor    # Health check (config, imports, deps, skills)
 ```
 
 ### Doctor Checks

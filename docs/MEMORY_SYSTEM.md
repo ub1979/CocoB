@@ -1,6 +1,6 @@
 # Memory System Documentation
 
-coco B uses a dual-storage memory architecture: JSONL for ordered session history, and **SQLite FTS5** for fast full-text search and fact extraction.
+SkillForge uses a dual-storage memory architecture: JSONL for ordered session history, and **SQLite FTS5** for fast full-text search and fact extraction.
 
 ## Overview
 
@@ -136,7 +136,7 @@ Context settings are in `config.py`:
 Delete the empty file and restart:
 ```bash
 rm data/memory.db
-python coco_b.py
+python skillforge.py
 ```
 The system auto-detects and removes 0-byte DB files on startup.
 
@@ -156,5 +156,5 @@ mem.delete_user_facts("user-id")
 
 ---
 
-*coco B — Persistent Memory AI Chatbot*
+*SkillForge — Persistent Memory AI Chatbot*
 *Making AI Useful for Everyone*

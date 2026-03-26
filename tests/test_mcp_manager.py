@@ -13,7 +13,7 @@ class TestMCPManagerInitialization:
 
     def test_initialization(self):
         """Should initialize with empty state."""
-        from coco_b.core.mcp_manager import MCPManager
+        from skillforge.core.mcp_manager import MCPManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = MCPManager(project_root=tmpdir)
@@ -22,7 +22,7 @@ class TestMCPManagerInitialization:
 
     def test_creates_config_file(self):
         """Should handle missing config file."""
-        from coco_b.core.mcp_manager import MCPManager
+        from skillforge.core.mcp_manager import MCPManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = MCPManager(project_root=tmpdir)
@@ -36,7 +36,7 @@ class TestListServers:
 
     def test_list_empty(self):
         """Should return empty list when no servers."""
-        from coco_b.core.mcp_manager import MCPManager
+        from skillforge.core.mcp_manager import MCPManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = MCPManager(project_root=tmpdir)
@@ -46,7 +46,7 @@ class TestListServers:
 
     def test_list_servers(self):
         """Should return list of servers."""
-        from coco_b.core.mcp_manager import MCPManager
+        from skillforge.core.mcp_manager import MCPManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = MCPManager(project_root=tmpdir)
@@ -74,7 +74,7 @@ class TestListServers:
 
     def test_format_server_list_empty(self):
         """Should format empty server list."""
-        from coco_b.core.mcp_manager import MCPManager
+        from skillforge.core.mcp_manager import MCPManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = MCPManager(project_root=tmpdir)
@@ -85,7 +85,7 @@ class TestListServers:
 
     def test_format_server_list(self):
         """Should format server list."""
-        from coco_b.core.mcp_manager import MCPManager
+        from skillforge.core.mcp_manager import MCPManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = MCPManager(project_root=tmpdir)
@@ -114,7 +114,7 @@ class TestEnableDisable:
 
     def test_enable_server(self):
         """Should enable a server."""
-        from coco_b.core.mcp_manager import MCPManager
+        from skillforge.core.mcp_manager import MCPManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = MCPManager(project_root=tmpdir)
@@ -144,7 +144,7 @@ class TestEnableDisable:
 
     def test_disable_server(self):
         """Should disable a server."""
-        from coco_b.core.mcp_manager import MCPManager
+        from skillforge.core.mcp_manager import MCPManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = MCPManager(project_root=tmpdir)
@@ -174,7 +174,7 @@ class TestEnableDisable:
 
     def test_enable_server_not_found(self):
         """Should fail for non-existent server."""
-        from coco_b.core.mcp_manager import MCPManager
+        from skillforge.core.mcp_manager import MCPManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = MCPManager(project_root=tmpdir)
@@ -190,7 +190,7 @@ class TestInstallVerified:
 
     def test_request_install_verified(self):
         """Should show verified message for verified server."""
-        from coco_b.core.mcp_manager import MCPManager
+        from skillforge.core.mcp_manager import MCPManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = MCPManager(project_root=tmpdir)
@@ -203,7 +203,7 @@ class TestInstallVerified:
 
     def test_request_install_unknown(self):
         """Should show warnings for unknown server."""
-        from coco_b.core.mcp_manager import MCPManager
+        from skillforge.core.mcp_manager import MCPManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = MCPManager(project_root=tmpdir)
@@ -216,7 +216,7 @@ class TestInstallVerified:
 
     def test_request_install_already_installed(self):
         """Should detect already installed packages."""
-        from coco_b.core.mcp_manager import MCPManager
+        from skillforge.core.mcp_manager import MCPManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = MCPManager(project_root=tmpdir)
@@ -245,7 +245,7 @@ class TestConfirmInstall:
 
     def test_confirm_no_pending(self):
         """Should fail if no pending install."""
-        from coco_b.core.mcp_manager import MCPManager
+        from skillforge.core.mcp_manager import MCPManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = MCPManager(project_root=tmpdir)
@@ -256,8 +256,8 @@ class TestConfirmInstall:
 
     def test_confirm_verified(self):
         """Should install verified server without confirmation text."""
-        from coco_b.core.mcp_manager import MCPManager
-        from coco_b.core.auth_manager import AuthManager
+        from skillforge.core.mcp_manager import MCPManager
+        from skillforge.core.auth_manager import AuthManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth_dir = Path(tmpdir) / "auth"
@@ -283,8 +283,8 @@ class TestConfirmInstall:
 
     def test_confirm_unknown_wrong_text(self):
         """Should fail if confirmation text doesn't match."""
-        from coco_b.core.mcp_manager import MCPManager
-        from coco_b.core.auth_manager import AuthManager
+        from skillforge.core.mcp_manager import MCPManager
+        from skillforge.core.auth_manager import AuthManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth_dir = Path(tmpdir) / "auth"
@@ -306,8 +306,8 @@ class TestConfirmInstall:
 
     def test_confirm_unknown_correct_text(self):
         """Should install unknown server with correct confirmation."""
-        from coco_b.core.mcp_manager import MCPManager
-        from coco_b.core.auth_manager import AuthManager
+        from skillforge.core.mcp_manager import MCPManager
+        from skillforge.core.auth_manager import AuthManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth_dir = Path(tmpdir) / "auth"
@@ -333,7 +333,7 @@ class TestCancelInstall:
 
     def test_cancel_pending(self):
         """Should cancel pending installation."""
-        from coco_b.core.mcp_manager import MCPManager
+        from skillforge.core.mcp_manager import MCPManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = MCPManager(project_root=tmpdir)
@@ -348,7 +348,7 @@ class TestCancelInstall:
 
     def test_cancel_nothing_pending(self):
         """Should handle no pending install."""
-        from coco_b.core.mcp_manager import MCPManager
+        from skillforge.core.mcp_manager import MCPManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = MCPManager(project_root=tmpdir)
@@ -363,8 +363,8 @@ class TestUninstall:
 
     def test_uninstall_server(self):
         """Should uninstall a server."""
-        from coco_b.core.mcp_manager import MCPManager
-        from coco_b.core.auth_manager import AuthManager
+        from skillforge.core.mcp_manager import MCPManager
+        from skillforge.core.auth_manager import AuthManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth_dir = Path(tmpdir) / "auth"
@@ -401,8 +401,8 @@ class TestUninstall:
 
     def test_uninstall_not_found(self):
         """Should fail for non-existent server."""
-        from coco_b.core.mcp_manager import MCPManager
-        from coco_b.core.auth_manager import AuthManager
+        from skillforge.core.mcp_manager import MCPManager
+        from skillforge.core.auth_manager import AuthManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             auth_dir = Path(tmpdir) / "auth"
@@ -425,7 +425,7 @@ class TestVerifiedList:
 
     def test_get_verified_list(self):
         """Should return formatted verified list."""
-        from coco_b.core.mcp_manager import MCPManager, VERIFIED_SERVERS
+        from skillforge.core.mcp_manager import MCPManager, VERIFIED_SERVERS
         
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = MCPManager(project_root=tmpdir)

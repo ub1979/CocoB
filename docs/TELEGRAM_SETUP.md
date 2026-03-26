@@ -1,10 +1,10 @@
 # Telegram Integration Setup
 
-This guide explains how to set up coco B for Telegram.
+This guide explains how to set up SkillForge for Telegram.
 
 ## Overview
 
-mr_bot uses the [python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot) library (28k+ GitHub stars), which is:
+SkillForge uses the [python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot) library (28k+ GitHub stars), which is:
 - Officially recommended by Telegram
 - Actively maintained
 - Fully async with Python 3.8+
@@ -50,7 +50,7 @@ python telegram_bot.py
 python -m channels.telegram
 
 # Option 3: With Flet Desktop UI
-python coco_b.py
+python skillforge.py
 ```
 
 ## Configuration
@@ -310,4 +310,4 @@ explain - Explain code
 
 ---
 
-*mr_bot - Making AI Useful for Everyone*
+*SkillForge - Making AI Useful for Everyone*

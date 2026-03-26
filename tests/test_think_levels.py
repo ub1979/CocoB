@@ -4,7 +4,7 @@
 
 import pytest
 from unittest.mock import MagicMock, patch
-from coco_b.core.router import MessageRouter
+from skillforge.core.router import MessageRouter
 
 
 @pytest.fixture
@@ -183,7 +183,7 @@ class TestThinkingModelCodeBlockExtraction:
     """Test that code blocks are extracted from reasoning field for thinking models."""
 
     def test_extract_code_block_from_reasoning(self):
-        from coco_b.core.llm.openai_compat import _CODE_BLOCK_RE
+        from skillforge.core.llm.openai_compat import _CODE_BLOCK_RE
         reasoning = (
             "Let me think about how to create this todo list...\n"
             "I should emit a todo code block.\n"
@@ -195,7 +195,7 @@ class TestThinkingModelCodeBlockExtraction:
         assert "ACTION: list" in blocks[0]
 
     def test_extract_multiple_code_blocks(self):
-        from coco_b.core.llm.openai_compat import _CODE_BLOCK_RE
+        from skillforge.core.llm.openai_compat import _CODE_BLOCK_RE
         reasoning = (
             "First block:\n```schedule\nACTION: create\nNAME: test\n```\n"
             "Second block:\n```todo\nACTION: add\nTITLE: Buy milk\n```\n"
@@ -204,14 +204,14 @@ class TestThinkingModelCodeBlockExtraction:
         assert len(blocks) == 2
 
     def test_no_code_blocks_returns_empty(self):
-        from coco_b.core.llm.openai_compat import _CODE_BLOCK_RE
+        from skillforge.core.llm.openai_compat import _CODE_BLOCK_RE
         reasoning = "I'm thinking about how to respond to this request..."
         blocks = _CODE_BLOCK_RE.findall(reasoning)
         assert len(blocks) == 0
 
     def test_chat_extracts_code_blocks_from_reasoning(self):
         """chat() should extract code blocks from reasoning when content is empty."""
-        from coco_b.core.llm.openai_compat import OpenAICompatibleProvider
+        from skillforge.core.llm.openai_compat import OpenAICompatibleProvider
         from unittest.mock import MagicMock
 
         config = MagicMock()
@@ -251,7 +251,7 @@ class TestThinkingModelCodeBlockExtraction:
 
     def test_chat_falls_back_to_full_reasoning_when_no_blocks(self):
         """chat() returns full reasoning when no code blocks found."""
-        from coco_b.core.llm.openai_compat import OpenAICompatibleProvider
+        from skillforge.core.llm.openai_compat import OpenAICompatibleProvider
         from unittest.mock import MagicMock
 
         config = MagicMock()
@@ -283,7 +283,7 @@ class TestThinkingModelCodeBlockExtraction:
 
     def test_chat_prefers_content_over_reasoning(self):
         """chat() should use content when it's not empty, ignoring reasoning."""
-        from coco_b.core.llm.openai_compat import OpenAICompatibleProvider
+        from skillforge.core.llm.openai_compat import OpenAICompatibleProvider
         from unittest.mock import MagicMock
 
         config = MagicMock()

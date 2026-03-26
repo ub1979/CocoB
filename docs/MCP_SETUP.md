@@ -1,10 +1,10 @@
 # MCP (Model Context Protocol) Integration Guide
 
-> Give coco B superpowers with MCP servers!
+> Give SkillForge superpowers with MCP servers!
 
 ## What is MCP?
 
-MCP lets AI models (like coco B) use **external tools and data sources**:
+MCP lets AI models (like SkillForge) use **external tools and data sources**:
 - **Playwright**: Browse websites, take screenshots, automate web tasks
 - **Filesystem**: Read/write files, search code
 - **GitHub**: Manage repos, PRs, issues
@@ -27,7 +27,7 @@ npm --version
 # If not installed, download from: https://nodejs.org/
 ```
 
-### Step 2: Start coco B Gradio UI
+### Step 2: Start SkillForge Gradio UI
 
 ```bash
 python gradio_ui.py
@@ -207,7 +207,7 @@ Once connected, Playwright provides:
 
 ## How Tools Work: Skills-Based Architecture
 
-coco B uses a **skills-based architecture** where users interact via simple commands, and skills execute MCP tools directly. This approach provides:
+SkillForge uses a **skills-based architecture** where users interact via simple commands, and skills execute MCP tools directly. This approach provides:
 
 - **Smaller prompts**: Tools aren't listed in every message
 - **Faster responses**: No LLM deciding which tool to call
@@ -395,4 +395,4 @@ For advanced users who want LLM to decide which tools to use:
 
 ---
 
-Ready to give coco B superpowers? Use `/email` and `/calendar` skills or connect MCP servers for more tools!
+Ready to give SkillForge superpowers? Use `/email` and `/calendar` skills or connect MCP servers for more tools!

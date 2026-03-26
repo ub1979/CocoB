@@ -11,8 +11,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from coco_b.core.skills.loader import Skill, parse_openclaw_skill_content
-from coco_b.core.clawhub import ClawHubManager
+from skillforge.core.skills.loader import Skill, parse_openclaw_skill_content
+from skillforge.core.clawhub import ClawHubManager
 
 
 # =============================================================================
@@ -36,7 +36,7 @@ def tmp_tracking_file(tmp_path):
 @pytest.fixture
 def clawhub(tmp_path, tmp_install_dir, tmp_tracking_file):
     """ClawHubManager with temp dirs."""
-    with patch("coco_b.core.clawhub.ClawHubManager.__init__", lambda self, **kw: None):
+    with patch("skillforge.core.clawhub.ClawHubManager.__init__", lambda self, **kw: None):
         mgr = ClawHubManager.__new__(ClawHubManager)
     mgr._skills_manager = None
     mgr._registry_url = "https://api.openclaw.ai/v1"
@@ -52,7 +52,7 @@ def clawhub(tmp_path, tmp_install_dir, tmp_tracking_file):
 # =============================================================================
 
 class TestOpenClawFormatAdapter:
-    """Tests for OpenClaw → coco B skill conversion."""
+    """Tests for OpenClaw → SkillForge skill conversion."""
 
     def test_basic_parsing(self):
         content = """---
@@ -614,7 +614,7 @@ class TestClawHubRouterIntegration:
     def router(self, tmp_path):
         """Create a minimal router with mocked dependencies."""
         from unittest.mock import MagicMock, PropertyMock, patch
-        from coco_b.core.router import MessageRouter
+        from skillforge.core.router import MessageRouter
 
         mock_session = MagicMock()
         mock_llm = MagicMock()

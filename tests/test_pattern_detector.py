@@ -13,7 +13,7 @@ class TestPatternType:
 
     def test_pattern_types_defined(self):
         """All pattern types should be defined."""
-        from coco_b.core.pattern_detector import PatternType
+        from skillforge.core.pattern_detector import PatternType
         
         assert PatternType.REPEATED_COMMAND == "repeated_command"
         assert PatternType.REPEATED_WORKFLOW == "repeated_workflow"
@@ -22,7 +22,7 @@ class TestPatternType:
 
     def test_all_types_list(self):
         """ALL_TYPES should contain all pattern types."""
-        from coco_b.core.pattern_detector import PatternType
+        from skillforge.core.pattern_detector import PatternType
         
         assert len(PatternType.ALL_TYPES) == 4
         assert PatternType.REPEATED_COMMAND in PatternType.ALL_TYPES
@@ -33,7 +33,7 @@ class TestDetectedPattern:
 
     def test_pattern_creation(self):
         """Should create pattern with required fields."""
-        from coco_b.core.pattern_detector import DetectedPattern
+        from skillforge.core.pattern_detector import DetectedPattern
         
         pattern = DetectedPattern(
             pattern_id="test123",
@@ -52,7 +52,7 @@ class TestDetectedPattern:
 
     def test_is_actionable(self):
         """Should correctly determine if pattern is actionable."""
-        from coco_b.core.pattern_detector import DetectedPattern
+        from skillforge.core.pattern_detector import DetectedPattern
         
         # Actionable pattern
         pattern = DetectedPattern(
@@ -82,7 +82,7 @@ class TestDetectedPattern:
 
     def test_to_dict(self):
         """Should convert to dictionary."""
-        from coco_b.core.pattern_detector import DetectedPattern
+        from skillforge.core.pattern_detector import DetectedPattern
         
         pattern = DetectedPattern(
             pattern_id="test",
@@ -100,7 +100,7 @@ class TestDetectedPattern:
 
     def test_from_dict(self):
         """Should create from dictionary."""
-        from coco_b.core.pattern_detector import DetectedPattern
+        from skillforge.core.pattern_detector import DetectedPattern
         
         data = {
             "pattern_id": "test",
@@ -123,7 +123,7 @@ class TestUserInteraction:
 
     def test_interaction_creation(self):
         """Should create interaction."""
-        from coco_b.core.pattern_detector import UserInteraction
+        from skillforge.core.pattern_detector import UserInteraction
         
         interaction = UserInteraction(
             timestamp=datetime.now().isoformat(),
@@ -140,7 +140,7 @@ class TestPatternDetectorInitialization:
 
     def test_initialization(self):
         """Should initialize with empty state."""
-        from coco_b.core.pattern_detector import PatternDetector
+        from skillforge.core.pattern_detector import PatternDetector
         
         with tempfile.TemporaryDirectory() as tmpdir:
             detector = PatternDetector(data_dir=tmpdir)
@@ -150,7 +150,7 @@ class TestPatternDetectorInitialization:
 
     def test_creates_data_directory(self):
         """Should create data directory."""
-        from coco_b.core.pattern_detector import PatternDetector
+        from skillforge.core.pattern_detector import PatternDetector
         
         with tempfile.TemporaryDirectory() as tmpdir:
             data_dir = Path(tmpdir) / "patterns"
@@ -164,7 +164,7 @@ class TestInteractionTracking:
 
     def test_record_interaction(self):
         """Should record interaction."""
-        from coco_b.core.pattern_detector import PatternDetector
+        from skillforge.core.pattern_detector import PatternDetector
         
         with tempfile.TemporaryDirectory() as tmpdir:
             detector = PatternDetector(data_dir=tmpdir)
@@ -176,7 +176,7 @@ class TestInteractionTracking:
 
     def test_record_multiple_interactions(self):
         """Should record multiple interactions."""
-        from coco_b.core.pattern_detector import PatternDetector
+        from skillforge.core.pattern_detector import PatternDetector
         
         with tempfile.TemporaryDirectory() as tmpdir:
             detector = PatternDetector(data_dir=tmpdir)
@@ -189,7 +189,7 @@ class TestInteractionTracking:
 
     def test_record_with_context(self):
         """Should record interaction with context."""
-        from coco_b.core.pattern_detector import PatternDetector
+        from skillforge.core.pattern_detector import PatternDetector
         
         with tempfile.TemporaryDirectory() as tmpdir:
             detector = PatternDetector(data_dir=tmpdir)
@@ -205,7 +205,7 @@ class TestPatternDetection:
 
     def test_detect_repeated_command(self):
         """Should detect repeated command pattern."""
-        from coco_b.core.pattern_detector import PatternDetector, PatternType
+        from skillforge.core.pattern_detector import PatternDetector, PatternType
         
         with tempfile.TemporaryDirectory() as tmpdir:
             detector = PatternDetector(data_dir=tmpdir)
@@ -222,7 +222,7 @@ class TestPatternDetection:
 
     def test_detect_repeated_command_with_variations(self):
         """Should detect pattern despite minor variations."""
-        from coco_b.core.pattern_detector import PatternDetector
+        from skillforge.core.pattern_detector import PatternDetector
         
         with tempfile.TemporaryDirectory() as tmpdir:
             detector = PatternDetector(data_dir=tmpdir)
@@ -241,7 +241,7 @@ class TestPatternDetection:
 
     def test_detect_workflow(self):
         """Should detect workflow patterns."""
-        from coco_b.core.pattern_detector import PatternDetector, PatternType
+        from skillforge.core.pattern_detector import PatternDetector, PatternType
         
         with tempfile.TemporaryDirectory() as tmpdir:
             detector = PatternDetector(data_dir=tmpdir)
@@ -260,7 +260,7 @@ class TestPatternDetection:
 
     def test_normalize_command(self):
         """Should normalize commands correctly."""
-        from coco_b.core.pattern_detector import PatternDetector
+        from skillforge.core.pattern_detector import PatternDetector
         
         with tempfile.TemporaryDirectory() as tmpdir:
             detector = PatternDetector(data_dir=tmpdir)
@@ -276,7 +276,7 @@ class TestPatternManagement:
 
     def test_get_suggestions(self):
         """Should return actionable suggestions."""
-        from coco_b.core.pattern_detector import PatternDetector
+        from skillforge.core.pattern_detector import PatternDetector
         
         with tempfile.TemporaryDirectory() as tmpdir:
             detector = PatternDetector(data_dir=tmpdir)
@@ -293,7 +293,7 @@ class TestPatternManagement:
 
     def test_dismiss_pattern(self):
         """Should dismiss pattern."""
-        from coco_b.core.pattern_detector import PatternDetector
+        from skillforge.core.pattern_detector import PatternDetector
         
         with tempfile.TemporaryDirectory() as tmpdir:
             detector = PatternDetector(data_dir=tmpdir)
@@ -315,7 +315,7 @@ class TestPatternManagement:
 
     def test_mark_skill_created(self):
         """Should mark pattern as skill created."""
-        from coco_b.core.pattern_detector import PatternDetector
+        from skillforge.core.pattern_detector import PatternDetector
         
         with tempfile.TemporaryDirectory() as tmpdir:
             detector = PatternDetector(data_dir=tmpdir)
@@ -337,7 +337,7 @@ class TestPatternManagement:
 
     def test_get_all_patterns(self):
         """Should return all patterns including dismissed."""
-        from coco_b.core.pattern_detector import PatternDetector
+        from skillforge.core.pattern_detector import PatternDetector
         
         with tempfile.TemporaryDirectory() as tmpdir:
             detector = PatternDetector(data_dir=tmpdir)
@@ -360,7 +360,7 @@ class TestPatternPersistence:
 
     def test_save_and_load(self):
         """Should persist patterns across instances."""
-        from coco_b.core.pattern_detector import PatternDetector
+        from skillforge.core.pattern_detector import PatternDetector
         
         with tempfile.TemporaryDirectory() as tmpdir:
             # First instance - record interactions
@@ -380,7 +380,7 @@ class TestPatternStatistics:
 
     def test_get_stats(self):
         """Should return correct statistics."""
-        from coco_b.core.pattern_detector import PatternDetector
+        from skillforge.core.pattern_detector import PatternDetector
         
         with tempfile.TemporaryDirectory() as tmpdir:
             detector = PatternDetector(data_dir=tmpdir)
@@ -397,7 +397,7 @@ class TestPatternStatistics:
 
     def test_clear_data(self):
         """Should clear all user data."""
-        from coco_b.core.pattern_detector import PatternDetector
+        from skillforge.core.pattern_detector import PatternDetector
         
         with tempfile.TemporaryDirectory() as tmpdir:
             detector = PatternDetector(data_dir=tmpdir)
@@ -419,7 +419,7 @@ class TestPatternConfidence:
 
     def test_confidence_increases_with_occurrences(self):
         """Confidence should increase with more occurrences."""
-        from coco_b.core.pattern_detector import PatternDetector
+        from skillforge.core.pattern_detector import PatternDetector
         
         with tempfile.TemporaryDirectory() as tmpdir:
             detector = PatternDetector(data_dir=tmpdir)
@@ -437,7 +437,7 @@ class TestPatternConfidence:
 
     def test_suggest_skill_name(self):
         """Should suggest appropriate skill names."""
-        from coco_b.core.pattern_detector import PatternDetector
+        from skillforge.core.pattern_detector import PatternDetector
         
         with tempfile.TemporaryDirectory() as tmpdir:
             detector = PatternDetector(data_dir=tmpdir)

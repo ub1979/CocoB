@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to **coco B** will be documented in this file.
+All notable changes to **SkillForge** will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -8,6 +8,81 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 ## [Unreleased]
+
+### Changed — 2026-03-25 (UI/UX Redesign)
+- **Settings card-grid navigation** — 7 clickable category cards (130×130, icon + title + subtitle) replace the old monolithic settings list; click a card to reveal its options panel below
+- **Design system overhaul** — unified single-accent indigo (`#6366F1`), neutral dark grays (`#111111`/`#1A1A1A`), clean light mode (`#F5F5F5`/`#FFFFFF`)
+- **Permissions section redesign** — clickable permission chips per user (click to toggle grant/revoke), accent-tinted enabled chips with border, clean role reference cards; removed separate Grant/Revoke section
+- **CollapsibleSection** redesign — left accent bar, box shadow, animated expand/collapse
+- **SubItemAccordion** widget — DRY replacement for 3× duplicated inline `create_sub_item` closures in messaging bots, LLM providers, and proactive tasks
+- **SectionHeader** widget — styled sub-group label with optional icon and subtitle
+- **ServerStatusCard / CliStatusCard** — left accent bars (green when active, muted when not)
+- **Admin view header** — matches new settings accent style
+- **Chat focus fix** — `message_input.focus()` after `page.update()` prevents focus loss when typing `/` commands in web UI
+- **Flet 0.80+ migration** — all deprecated `ft.padding/border/border_radius/ElevatedButton` calls replaced across 12 files
+
+### Added — 2026-03-25 (Admin Panel, Login Gate, Cross-Platform Identity)
+- **Login gate** (`flet/views/login.py`) — password-protected access to the Flet web UI
+  - First run: admin account setup form; subsequent runs: login form
+  - Credentials stored securely via PBKDF2 hashing in `SecureStorage`
+  - 6 tests in `tests/test_admin_login.py`
+- **Admin dashboard** (`flet/views/admin.py`) — 5th nav tab with three sub-tabs:
+  - **Users & Roles**: add/remove users, change roles via dropdown
+  - **Permission Requests**: approve/deny pending permission requests from users
+  - **Identity Linking**: link platform-specific IDs (telegram:12345, whatsapp:+92...) to canonical user IDs
+- **Cross-platform identity resolution** (`core/identity_resolver.py`)
+  - Maps platform-specific IDs to canonical user IDs via `data/identity_map.json`
+  - Router resolves identity at top of `handle_message` / `handle_message_stream`
+  - 8 tests in `tests/test_identity_resolver.py`
+- **Permission request queue** (`core/permission_requests.py`)
+  - Users can `/request-permission <perm>` instead of hitting a dead-end denial
+  - Admin approves/denies from dashboard or via `/approve` / `/deny` commands
+  - 9 tests in `tests/test_permission_requests.py`
+- **New router commands**: `/request-permission`, `/my-requests`, `/pending-requests`, `/approve`, `/deny`, `/link-identity`
+- **Chat avatar**: uses `chat_icon.png` (robot head) for assistant messages
+- **App icon**: `icon/icon.png` (robot with anvil) for application window
+
+### Added — 2026-03-19 (Image/Vision Support — Epics E-001 through E-006)
+- **Full image/vision pipeline** — send images to vision-capable LLMs, receive and render generated images, across all channels
+- **E-001: Core Image Infrastructure** (`core/image_handler.py`)
+  - `ImageHandler` — validates file type/size, stores images to `data/images/{session_key}/`, base64 encoding, metadata tracking, automatic cleanup of old images
+  - `Attachment` dataclass — unified image reference (file_path, mime_type, base64 data, original filename)
+  - Supported formats: JPEG, PNG, GIF, WebP, BMP, TIFF; configurable max size (default 20 MB)
+  - 97 tests in `tests/test_image_handler.py`
+- **E-002: LLM Provider Vision Support** (`core/llm/`)
+  - `supports_vision` property and `format_vision_messages()` method added to `LLMProvider` base class
+  - OpenAI-compatible providers: multi-part content arrays with `image_url` (base64 data URI)
+  - Anthropic provider: `image` content blocks with `source.type = "base64"`
+  - Gemini provider: `inline_data` parts with mime_type and base64 data
+  - CLI providers (Claude CLI, Gemini CLI): vision support flags, attachment passing
+  - Llama.cpp provider: vision support detection based on model name
+  - 36 tests in `tests/test_vision_providers.py`
+- **E-003: Router Integration** (`core/router.py`, `core/sessions.py`)
+  - `handle_message()` and `handle_message_stream()` accept optional `attachments` parameter (list of `Attachment` objects); default `None` preserves full backward compatibility
+  - Images stored via `ImageHandler`, references saved in JSONL metadata
+  - Vision-capable LLMs receive multi-modal message payloads via `format_vision_messages()`
+  - Non-vision LLMs get contextual fallback note suggesting a vision-capable model
+  - Permission-gated on `files` permission; session history includes attachment references
+  - 20 tests in `tests/test_router_image_integration.py`
+- **E-004: Channel Inbound** (`channels/telegram.py`, `channels/whatsapp.py`, `flet/views/chat.py`)
+  - Telegram: photo/document handler downloads images via Bot API `get_file()`, creates `Attachment`, passes to router
+  - WhatsApp: image message handler downloads via Baileys `/download-media` endpoint, creates `Attachment`
+  - Flet UI: file picker button in chat input, image preview before send, drag-and-drop support
+  - 22 tests in `tests/test_channel_images.py`
+- **E-005: Channel Outbound** (`core/router.py`, `channels/`, `flet/`)
+  - Router `extract_outbound_images()` — extracts image file paths from bot responses; detects `[Generated Image: ...]`, `Saved to:` markers, `![alt](path)` markdown images
+  - Telegram `send_image()` — sends images as native Telegram photos via `send_photo()` API
+  - WhatsApp `send_image()` — sends images via Baileys `/send-media` endpoint (base64 or URL)
+  - Baileys `/send-media` endpoint — new route in `whatsapp_service/server.js`
+  - Flet `ChatMessage` — inline image rendering with `ft.Image` for attached images
+  - 36 tests in `tests/test_channel_outbound.py`
+- **E-006: Image Generation Handler** (`core/image_gen_handler.py`)
+  - Code-block handler for `` ```image_gen``` `` blocks; parses PROMPT, STYLE, SIZE, PROVIDER, NEGATIVE_PROMPT, COUNT fields
+  - MCP tool delegation — discovers image generation tools across connected MCP servers
+  - Graceful fallback with setup instructions when no MCP image gen tool is available
+  - Router wired in both `handle_message` and `handle_message_stream`, permission-gated on `files`
+  - 67 tests in `tests/test_image_gen_handler.py`
+- **Total: 278 new tests** across 5 test files (97 + 36 + 20 + 22 + 36 + 67)
 
 ### Fixed — 2026-03-02 (Chat UI Refresh + Web Search)
 - **Chat response now renders immediately** — converted `_send_message` and `_process_bot_response` from `ThreadPoolExecutor` + manual `asyncio.new_event_loop()` to native `async def` on Flet's event loop; `page.update()` now runs on the correct thread so the window repaints instantly instead of only when switching apps back (macOS desktop Flet thread-safety issue)
@@ -62,7 +137,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed — 2026-02-26 (Scheduler/Reminders Not Working)
 - **LLM now knows about scheduling** — system prompt includes scheduling capability hint when `SchedulerManager` is active, so natural language like "remind me at 5pm" triggers `\`\`\`schedule\`\`\`` blocks instead of "I can't do that"
-- **Flet channel handler registered** — `CocoBApp` now registers a "flet" channel handler with `SchedulerManager` so scheduled tasks/reminders are delivered to the chat UI via `inject_scheduled_message()`
+- **Flet channel handler registered** — `SkillForgeApp` now registers a "flet" channel handler with `SchedulerManager` so scheduled tasks/reminders are delivered to the chat UI via `inject_scheduled_message()`
 - **`inject_scheduled_message()` on ChatView** — new public method that pushes scheduler-triggered reminders into the message list with a clock emoji prefix
 - **`_scheduler_manager` stored on router** — `set_scheduler_manager()` now stores the reference on the router instance for system prompt conditioning
 - **Current UTC time injected into prompt** — system prompt now includes `Current UTC time: ...` so the LLM calculates correct RUN_AT datetimes (fixes wrong year/wrong time in schedule blocks)
@@ -75,7 +150,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 12 new tests in `tests/test_claude_cli.py` (format_messages, session persistence, build command) + 1 streaming test in `test_flet_app.py`
 
 ### Changed — 2026-02-25 (Flet UI Refactor)
-- **Modular `coco_b.flet` package** — refactored 5,882-line `app.py` monolith into 16 focused modules
+- **Modular `skillforge.flet` package** — refactored 5,882-line `app.py` monolith into 16 focused modules
   - `flet/theme.py` — `AppColors`, `Spacing`, provider category dicts, utility functions
   - `flet/storage.py` — `SecureStorage` for encrypted token/settings persistence
   - `flet/components/` — `ChatMessage` (with Markdown rendering), `CollapsibleSection`, `StatusBadge`, `StyledButton`, `ServerStatusCard`, `CliStatusCard`
@@ -86,10 +161,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `flet/app.py` — thin orchestrator with 4-tab navigation
 - **Navigation consolidated**: 6 tabs (Chat, Settings, MCP, Skills, ClawHub, History) → 4 tabs (Chat, Tools, Settings, History)
 - **Markdown rendering** in assistant chat messages (`ft.Markdown` with GitHub Web extension set, atom-one-dark code theme)
-- **Animated typing indicator** replaces static "Thinking..." text with `ProgressRing` + "coco B is thinking..."
+- **Animated typing indicator** replaces static "Thinking..." text with `ProgressRing` + "SkillForge is thinking..."
 - Old `app.py` replaced with thin backward-compatible wrapper
 - 15 new import tests in `TestFletImports`
-- 29 smoke tests in `tests/test_flet_app.py` — builds every view, component, and full `CocoBApp` with mock page
+- 29 smoke tests in `tests/test_flet_app.py` — builds every view, component, and full `SkillForgeApp` with mock page
 - Total test count: 862 → 891
 
 ### Added — 2026-02-24 (Web Tools)
@@ -102,9 +177,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Total test count: 791 → 848
 
 ### Added — 2026-02-24 (CLI & Docker)
-- **`coco-b` console script** — single CLI entry point registered via pyproject.toml `[project.scripts]`
+- **`skillforge` console script** — single CLI entry point registered via pyproject.toml `[project.scripts]`
   - Subcommands: `ui`, `gradio`, `bot`, `telegram`, `slack`, `discord`, `doctor`
-  - `coco-b doctor` — checks config, data dirs, core imports, optional deps, LLM config, bundled skills
+  - `skillforge doctor` — checks config, data dirs, core imports, optional deps, LLM config, bundled skills
 - **Docker deployment** — `Dockerfile` (multi-stage build), `docker-compose.yml` (all channels as profiles), `.dockerignore`
 - 8 tests in `tests/test_cli.py`
 
@@ -129,7 +204,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added — 2026-02-24 (ClawHub Integration)
 - **ClawHub integration** — search, install, and manage 5,700+ community skills from OpenClaw.ai's ClawHub registry
   - `ClawHubManager` (`core/clawhub.py`) — registry API client with 5-min search caching, install/uninstall, version tracking
-  - OpenClaw format adapter (`parse_openclaw_skill_content`) — converts OpenClaw.ai SKILL.md format (nested emoji, `{baseDir}`, version/author) to coco B `Skill` objects
+  - OpenClaw format adapter (`parse_openclaw_skill_content`) — converts OpenClaw.ai SKILL.md format (nested emoji, `{baseDir}`, version/author) to SkillForge `Skill` objects
   - Extended `Skill` dataclass with `version`, `author`, `clawhub_slug` fields (backward compatible)
   - Chat commands: `/clawhub search|install|list|info|uninstall|updates`
   - UI tab: "ClawHub" nav destination with search bar, result cards, install/uninstall buttons, update checker
@@ -139,9 +214,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Total test count: 656 → 726
 
 ### Added — 2026-02-24
-- **`cocob.sh` launch script** — one-command launcher that activates conda env and runs the Flet UI
-- **README.md updated** — project structure now reflects `src/coco_b/` layout, quick start uses conda + `cocob.sh`
-- **CONTRIBUTING.md updated** — renamed all "mr_bot" references to "coco B"
+- **`skillforge.sh` launch script** — one-command launcher that activates conda env and runs the Flet UI
+- **README.md updated** — project structure now reflects `src/skillforge/` layout, quick start uses conda + `skillforge.sh`
+- **CONTRIBUTING.md updated** — renamed all "mr_bot" references to "SkillForge"
 
 ### Fixed — 2026-02-22 (WhatsApp MCP + Persona Wiring + Scheduling)
 - **MCP auto-connect on startup** — `router.set_mcp_manager()` is now called at app init, and enabled MCP servers auto-connect in a background thread (tools now work on WhatsApp and all channels)
@@ -244,12 +319,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Chat text wrapping fix** — Message bubbles in Flet UI now properly wrap long text instead of extending beyond the visible area.
 
 ### Changed — 2026-02-20
-- **Restructured to `src/coco_b/` package layout** — proper Python package structure
-  - All Python code moved to `src/coco_b/` (core/, channels/, ui/, entry points)
+- **Restructured to `src/skillforge/` package layout** — proper Python package structure
+  - All Python code moved to `src/skillforge/` (core/, channels/, ui/, entry points)
   - Added `pyproject.toml` with setuptools build config and optional dependencies
   - `pip install -e .` replaces all `sys.path` hacks
-  - Single CLI entry: `python -m coco_b ui/gradio/bot/telegram/slack/discord`
-  - `PROJECT_ROOT` constant in `coco_b/__init__.py` replaces `Path(__file__).parent.parent` chains
+  - Single CLI entry: `python -m skillforge ui/gradio/bot/telegram/slack/discord`
+  - `PROJECT_ROOT` constant in `skillforge/__init__.py` replaces `Path(__file__).parent.parent` chains
   - Setup/architecture docs moved to `docs/`, dev scripts to `scripts/`
   - `skills/`, `data/`, `config.py`, tests stay at project root
 
@@ -290,7 +365,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Start/Stop Baileys service from UI button
   - QR code display in settings for authentication
   - Access control: DM Policy, Group Policy, Allowlist
-  - Bot prefix "🤖 *coco B:*" for responses to others
+  - Bot prefix "🤖 *SkillForge:*" for responses to others
   - LID-to-phone caching for WhatsApp group messages
   - Webhook server for receiving and responding to messages
   - Support for both DMs and group chats
@@ -307,7 +382,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Password protection for viewing saved token
   - Token hidden, revealed only for 10 seconds after password
   - Auto-start option: bot starts automatically on app launch
-  - Encrypted storage in `~/.coco_b/secure_config.json`
+  - Encrypted storage in `~/.skillforge/secure_config.json`
 - **Smart Search** - Auto-detect questions needing real-time web search
   - Sports scores, match results (cricket, football, etc.)
   - News, weather, stock prices
@@ -317,7 +392,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Switch provider on desktop → Telegram uses same provider
   - `/provider <name>` command to switch LLM from Telegram
   - `/status` command to check current provider and MCP servers
-  - Settings saved to `~/.coco_b/secure_config.json`
+  - Settings saved to `~/.skillforge/secure_config.json`
 - **Response Speed Optimizations** - Following OpenClaw.ai's token reduction strategies
   - System prompt reduced 90% (509 words → 50 words)
   - Conversation history limited to last 10 messages (was unlimited)
@@ -331,9 +406,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `/email` - Send, search, read, draft, label, archive emails
   - `/calendar` - View, create, update, delete events
   - Two setup options: Self-hosted (FREE) or Composio
-- **Chat Avatar Icon** - Assistant messages now display coco B icon (`inner_chat.png`)
+- **Chat Avatar Icon** - Assistant messages now display SkillForge icon (`icon.png`)
 - **CLI Provider Quick Switch** - Click "Use" button directly on CLI provider cards (no dropdown)
-- **Telegram Bot Script** (`telegram_bot.py`) - Standalone script to run coco B as a Telegram bot
+- **Telegram Bot Script** (`telegram_bot.py`) - Standalone script to run SkillForge as a Telegram bot
   - Full integration with MessageRouter, Skills, and MCP
   - Automatic bot info display on startup
   - Supports polling and webhook modes
@@ -379,8 +454,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `_execute_google_search()` method for Google searches
   - `_execute_browse()` method for URL browsing
   - `_extract_mcp_result()` helper for parsing MCP responses
-- **coco B Icon** - Added icon to Flet UI window and chat header
-- **Flet UI** (`coco_b.py`) - Modern cross-platform desktop UI (renamed from `flet_ui_complete.py`)
+- **SkillForge Icon** - Added icon to Flet UI window and chat header
+- **Flet UI** (`skillforge.py`) - Modern cross-platform desktop UI (renamed from `flet_ui_complete.py`)
   - Native desktop app support (Windows, macOS, Linux)
   - Organized provider sections by type (Local Servers, CLI, Cloud API)
   - Real-time server status monitoring for local LLM servers
@@ -411,8 +486,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CONTRIBUTING.md guidelines
 
 ### Changed
-- **Main Entry Point Renamed** - `flet_ui_complete.py` renamed to `coco_b.py`
-- **Project Renamed** - Bot renamed from "mr_bot" to "coco B"
+- **Main Entry Point Renamed** - `flet_ui_complete.py` renamed to `skillforge.py`
+- **Project Renamed** - Bot renamed from "mr_bot" to "SkillForge"
   - Updated all UI titles and display names
   - Updated bot personality prompts
   - Updated documentation
@@ -469,7 +544,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2026-02-07
 
 ### Added
-- Initial release of coco B
+- Initial release of SkillForge
 - Persistent memory architecture with JSONL storage
 - Multi-channel support (MS Teams, WhatsApp, Telegram, Gradio UI)
 - Multi-provider LLM support (15+ providers including Ollama, OpenAI, Anthropic, etc.)
@@ -549,6 +624,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 | 1.4.0 | 2026-02-20 | 6 new skills, todo handler, test suite, Flet UI fix |
 | 1.5.0 | 2026-02-21 | Tiered auth, heartbeat, pattern detection, background tasks, MCP manager, webhook security (405 tests) |
 | 1.6.0 | 2026-02-22 | Multi-persona system — per-user/channel personality profiles, 4 built-in personas, chat commands, settings UI (656 tests) |
+| 1.7.0 | 2026-03-19 | Image/Vision support — 6-epic pipeline: image handling, vision providers, router integration, channel inbound/outbound, image generation (1268 tests) |
 
 ---
 
@@ -571,11 +647,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-**Project**: coco B - Persistent Memory AI Chatbot
+**Project**: SkillForge - Persistent Memory AI Chatbot
 **Organization**: Idrak AI Ltd
 **License**: MIT
 **Mission**: Making AI Useful for Everyone
 
 ---
 
-*For the latest updates, visit: [GitHub Repository](https://github.com/ub1979/CocoB)*
+*For the latest updates, visit: [GitHub Repository](https://github.com/ub1979/SkillForge)*

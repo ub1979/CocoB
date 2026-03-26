@@ -13,7 +13,7 @@ class TestSQLiteWALMode:
 
     def test_wal_mode_enabled(self):
         """SQLite database should have WAL mode enabled."""
-        from coco_b.core.memory import SQLiteMemory
+        from skillforge.core.memory import SQLiteMemory
         
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path = os.path.join(tmpdir, "test_memory.db")
@@ -32,7 +32,7 @@ class TestSQLiteWALMode:
 
     def test_synchronous_setting(self):
         """SQLite should have synchronous setting configured."""
-        from coco_b.core.memory import SQLiteMemory
+        from skillforge.core.memory import SQLiteMemory
         
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path = os.path.join(tmpdir, "test_memory.db")
@@ -53,7 +53,7 @@ class TestSQLiteWALMode:
 
     def test_tables_created(self):
         """Required tables should be created."""
-        from coco_b.core.memory import SQLiteMemory
+        from skillforge.core.memory import SQLiteMemory
         
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path = os.path.join(tmpdir, "test_memory.db")
@@ -78,7 +78,7 @@ class TestSQLiteWALMode:
 
     def test_wal_file_created(self):
         """WAL mode should create .wal and .shm files during transactions."""
-        from coco_b.core.memory import SQLiteMemory
+        from skillforge.core.memory import SQLiteMemory
         
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path = os.path.join(tmpdir, "test_memory.db")
@@ -107,7 +107,7 @@ class TestSQLiteWALMode:
 
     def test_concurrent_access(self):
         """WAL mode should allow concurrent reads during writes."""
-        from coco_b.core.memory import SQLiteMemory
+        from skillforge.core.memory import SQLiteMemory
         
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path = os.path.join(tmpdir, "test_memory.db")

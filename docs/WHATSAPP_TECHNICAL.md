@@ -2,13 +2,13 @@
 
 ## Overview
 
-mr_bot uses a **secure microservice architecture** for WhatsApp integration:
+SkillForge uses a **secure microservice architecture** for WhatsApp integration:
 
 ```
-┌─────────────┐     HTTP API      ┌──────────────────┐     WebSocket     ┌──────────────┐
-│   mr_bot    │ ←───────────────→ │ WhatsApp Service │ ←───────────────→ │ WhatsApp Web │
-│  (Python)   │    localhost:3979 │  (Node.js/Baileys)│                   │   Servers    │
-└─────────────┘                   └──────────────────┘                   └──────────────┘
+┌──────────────┐     HTTP API      ┌──────────────────┐     WebSocket     ┌──────────────┐
+│  SkillForge  │ ←───────────────→ │ WhatsApp Service │ ←───────────────→ │ WhatsApp Web │
+│   (Python)   │    localhost:3979 │  (Node.js/Baileys)│                   │   Servers    │
+└──────────────┘                   └──────────────────┘                   └──────────────┘
 ```
 
 ### Why This Approach?
@@ -63,7 +63,7 @@ curl http://localhost:3979/status
 # Send a test message
 curl -X POST http://localhost:3979/send \
   -H "Content-Type: application/json" \
-  -d '{"to": "1234567890", "message": "Hello from mr_bot!"}'
+  -d '{"to": "1234567890", "message": "Hello from SkillForge!"}'
 ```
 
 ---
@@ -74,25 +74,25 @@ curl -X POST http://localhost:3979/send \
 
 | Component | Language | Port | Description |
 |-----------|----------|------|-------------|
-| **mr_bot** | Python | 3978 | Main bot with AI, sessions, personality |
+| **SkillForge** | Python | 3978 | Main bot with AI, sessions, personality |
 | **WhatsApp Service** | Node.js | 3979 | Baileys-based WhatsApp Web gateway |
 
 ### Data Flow
 
 1. **Incoming Message:**
    ```
-   WhatsApp → Baileys Service → HTTP POST → mr_bot webhook → AI response → Send via HTTP
+   WhatsApp → Baileys Service → HTTP POST → SkillForge webhook → AI response → Send via HTTP
    ```
 
 2. **Outgoing Message:**
    ```
-   mr_bot → HTTP POST /send → Baileys Service → WhatsApp
+   SkillForge → HTTP POST /send → Baileys Service → WhatsApp
    ```
 
 ### File Structure
 
 ```
-mr_bot/
+skillforge/
 ├── channels/
 │   └── whatsapp.py          # Python HTTP client
 │
@@ -184,7 +184,7 @@ status = await wa.check_status()
 print(f"Connected: {status['connected']}")
 
 # Send message
-await wa.send_message("1234567890", "Hello from mr_bot!")
+await wa.send_message("1234567890", "Hello from SkillForge!")
 
 # Close
 await wa.close()
@@ -201,7 +201,7 @@ wa = WhatsAppChannel(message_handler=handle_message)
 await wa.configure_webhook()
 ```
 
-### Integration with mr_bot Router
+### Integration with SkillForge Router
 
 ```python
 from core.router import MessageRouter

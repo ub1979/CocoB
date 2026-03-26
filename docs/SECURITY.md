@@ -2,9 +2,9 @@
 
 ## Overview
 
-**coco B** is designed with security as a core principle. This document outlines the security features, best practices, and considerations for deploying and using the bot safely.
+**SkillForge** is designed with security as a core principle. This document outlines the security features, best practices, and considerations for deploying and using the bot safely.
 
-> 🛡️ **Security by Design**: Every component of coco B has been reviewed for security vulnerabilities and hardened against common attack vectors.
+> 🛡️ **Security by Design**: Every component of SkillForge has been reviewed for security vulnerabilities and hardened against common attack vectors.
 
 ---
 
@@ -265,21 +265,21 @@ return hmac.compare_digest(computed_hash, stored_hash)
 **Example Flow**:
 ```
 [9:00 AM - Heartbeat - GREEN]
-coco B: "🌅 Morning! 3 emails, 1 meeting today"
+SkillForge: "🌅 Morning! 3 emails, 1 meeting today"
          (No auth needed - just reading)
 
 [9:05 AM - Check Email - YELLOW]
 You: /email check
-coco B: "📧 3 emails... 🔐 Enter PIN to read"
+SkillForge: "📧 3 emails... 🔐 Enter PIN to read"
 You: 1234
-coco B: "✅ Email from boss... ⏱️ PIN valid 30 min"
+SkillForge: "✅ Email from boss... ⏱️ PIN valid 30 min"
 
 [9:30 AM - Create Skill - ORANGE]
-coco B: "💡 Suggest creating '/morning-brief' skill?"
+SkillForge: "💡 Suggest creating '/morning-brief' skill?"
 You: yes
-coco B: "🔐 Enter password (1-hour session):"
+SkillForge: "🔐 Enter password (1-hour session):"
 You: mypassword123
-coco B: "✅ Skill created! 🔓 Session active 59 min"
+SkillForge: "✅ Skill created! 🔓 Session active 59 min"
          (Can create more skills without re-entering)
 ```
 
@@ -342,12 +342,12 @@ coco B: "✅ Skill created! 🔓 Session active 59 min"
 **Example Flow**:
 ```
 [User checks email 5 times this week]
-coco B: "💡 Pattern detected: You check email frequently."
+SkillForge: "💡 Pattern detected: You check email frequently."
         "   Suggest creating '/check-email' skill?"
         "   🔐 Enter password to view (ORANGE level)"
 
 You: mypassword123
-coco B: "✅ Pattern: 'check email' (5 times)"
+SkillForge: "✅ Pattern: 'check email' (5 times)"
         "   Would you like me to create this skill?"
         "   [Yes] [No, dismiss] [Remind later]"
 ```
@@ -556,7 +556,7 @@ Note: `hmac` and `hashlib` are part of Python's standard library, no installatio
 
 ---
 
-**Project**: coco B - Persistent Memory AI Chatbot  
+**Project**: SkillForge - Persistent Memory AI Chatbot  
 **Organization**: Idrak AI Ltd  
 **License**: Open Source - Safe Open Community Project  
 **Mission**: Making AI Useful for Everyone

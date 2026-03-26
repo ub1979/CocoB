@@ -11,7 +11,7 @@ class TestSessionKeyNamespace:
 
     def test_different_channels_same_user_id(self):
         """Same user ID on different channels should produce different session keys."""
-        from coco_b.core.sessions import SessionManager
+        from skillforge.core.sessions import SessionManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             sm = SessionManager(str(tmpdir))
@@ -30,7 +30,7 @@ class TestSessionKeyNamespace:
     
     def test_session_key_contains_channel(self):
         """Session key should contain the channel name."""
-        from coco_b.core.sessions import SessionManager
+        from skillforge.core.sessions import SessionManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             sm = SessionManager(str(tmpdir))
@@ -41,7 +41,7 @@ class TestSessionKeyNamespace:
     
     def test_session_key_contains_chat_type(self):
         """Session key should contain chat type (direct or group)."""
-        from coco_b.core.sessions import SessionManager
+        from skillforge.core.sessions import SessionManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             sm = SessionManager(str(tmpdir))
@@ -54,7 +54,7 @@ class TestSessionKeyNamespace:
     
     def test_session_key_contains_user_id(self):
         """Session key should contain the user ID."""
-        from coco_b.core.sessions import SessionManager
+        from skillforge.core.sessions import SessionManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             sm = SessionManager(str(tmpdir))
@@ -65,7 +65,7 @@ class TestSessionKeyNamespace:
     
     def test_group_chat_includes_chat_id(self):
         """Group chat session key should include chat ID."""
-        from coco_b.core.sessions import SessionManager
+        from skillforge.core.sessions import SessionManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             sm = SessionManager(str(tmpdir))
@@ -76,7 +76,7 @@ class TestSessionKeyNamespace:
     
     def test_no_collision_between_platforms(self):
         """Ensure no collision between different messaging platforms."""
-        from coco_b.core.sessions import SessionManager
+        from skillforge.core.sessions import SessionManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             sm = SessionManager(str(tmpdir))
@@ -93,7 +93,7 @@ class TestSessionKeyNamespace:
     
     def test_session_isolation(self):
         """Sessions for same user on different channels should be isolated."""
-        from coco_b.core.sessions import SessionManager
+        from skillforge.core.sessions import SessionManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             sm = SessionManager(str(tmpdir))

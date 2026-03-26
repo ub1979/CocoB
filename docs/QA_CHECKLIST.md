@@ -1,6 +1,6 @@
-# QA Testing Checklist for mr_bot
+# QA Testing Checklist for SkillForge
 
-Use this checklist to manually test all features of mr_bot before releases.
+Use this checklist to manually test all features of SkillForge before releases.
 
 ## 🚀 Quick Start
 

@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Report a bug to help us improve coco B
+about: Report a bug to help us improve SkillForge
 title: '[Bug] '
 labels: bug
 assignees: ''
@@ -36,7 +36,7 @@ Paste any error messages or relevant logs here
 - **Python version**: (e.g., 3.12)
 - **LLM provider**: (e.g., Ollama, Gemini CLI, Claude CLI)
 - **Channel**: (e.g., Flet UI, Telegram, WhatsApp)
-- **coco B version**: (run `git log --oneline -1`)
+- **SkillForge version**: (run `git log --oneline -1`)
 
 ## Screenshots (if applicable)
 

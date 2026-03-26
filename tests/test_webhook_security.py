@@ -16,7 +16,7 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from coco_b.core.webhook_security import (
+from skillforge.core.webhook_security import (
     WebhookSecurityError,
     verify_whatsapp_signature,
     verify_telegram_secret,

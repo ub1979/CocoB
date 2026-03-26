@@ -2,7 +2,7 @@
 '''
     File Name : config.example.py
     
-    Description : Configuration file template for the mr_bot chatbot.
+    Description : Configuration file template for the SkillForge chatbot.
                   Copy this file to config.py and fill in your credentials.
                   Contains settings for MS Teams, AI provider, server,
                   session storage, and context management.
@@ -11,7 +11,7 @@
     
     Done by : Syed Usama Bukhari & Idrak AI Ltd Team
     
-    Project : mr_bot - Persistent Memory AI Chatbot
+    Project : SkillForge - Persistent Memory AI Chatbot
     
     License : Open Source - Safe Open Community Project
     
@@ -95,7 +95,7 @@ COMPACTION_THRESHOLD = 0.8  # Compact at 80% full
     3. Adjust AI settings as needed
     4. Run the bot
     
-    Project : mr_bot - Persistent Memory AI Chatbot
+    Project : SkillForge - Persistent Memory AI Chatbot
     
     License : Open Source - Safe Open Community Project
     

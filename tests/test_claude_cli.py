@@ -26,12 +26,12 @@ def mock_config():
 @pytest.fixture
 def provider(mock_config, tmp_path):
     """Create a ClaudeCLIProvider with session file pointed at tmp_path."""
-    import coco_b.core.llm.claude_cli_provider as mod
+    import skillforge.core.llm.claude_cli_provider as mod
     original = mod._SESSION_FILE
     mod._SESSION_FILE = tmp_path / "claude_session.json"
     try:
         with patch("shutil.which", return_value="/usr/bin/claude"):
-            from coco_b.core.llm.claude_cli_provider import ClaudeCLIProvider
+            from skillforge.core.llm.claude_cli_provider import ClaudeCLIProvider
             p = ClaudeCLIProvider(mock_config)
             yield p
     finally:
@@ -104,7 +104,7 @@ class TestSessionPersistence:
 
     def test_save_and_load_session(self, provider, tmp_path):
         """Save session ID then load it back."""
-        import coco_b.core.llm.claude_cli_provider as mod
+        import skillforge.core.llm.claude_cli_provider as mod
         provider._session_id = "test-session-abc"
         provider._save_session_id()
 
@@ -118,7 +118,7 @@ class TestSessionPersistence:
 
     def test_load_returns_none_when_no_file(self, provider, tmp_path):
         """Loading when no file exists returns None."""
-        import coco_b.core.llm.claude_cli_provider as mod
+        import skillforge.core.llm.claude_cli_provider as mod
         if mod._SESSION_FILE.exists():
             mod._SESSION_FILE.unlink()
         result = provider._load_session_id()
@@ -126,14 +126,14 @@ class TestSessionPersistence:
 
     def test_load_handles_corrupt_file(self, provider, tmp_path):
         """Corrupt JSON should return None, not crash."""
-        import coco_b.core.llm.claude_cli_provider as mod
+        import skillforge.core.llm.claude_cli_provider as mod
         mod._SESSION_FILE.write_text("not valid json{{{")
         result = provider._load_session_id()
         assert result is None
 
     def test_reset_session_clears_file(self, provider, tmp_path):
         """reset_session should remove the persisted file."""
-        import coco_b.core.llm.claude_cli_provider as mod
+        import skillforge.core.llm.claude_cli_provider as mod
         provider._session_id = "test-session"
         provider._save_session_id()
         assert mod._SESSION_FILE.exists()
@@ -144,13 +144,13 @@ class TestSessionPersistence:
 
     def test_init_loads_persisted_session(self, mock_config, tmp_path):
         """New provider instance should load session from disk."""
-        import coco_b.core.llm.claude_cli_provider as mod
+        import skillforge.core.llm.claude_cli_provider as mod
         original = mod._SESSION_FILE
         mod._SESSION_FILE = tmp_path / "claude_session.json"
         try:
             mod._SESSION_FILE.write_text(json.dumps({"session_id": "persisted-123"}))
             with patch("shutil.which", return_value="/usr/bin/claude"):
-                from coco_b.core.llm.claude_cli_provider import ClaudeCLIProvider
+                from skillforge.core.llm.claude_cli_provider import ClaudeCLIProvider
                 p = ClaudeCLIProvider(mock_config)
                 assert p._session_id == "persisted-123"
         finally:

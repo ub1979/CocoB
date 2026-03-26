@@ -4,8 +4,8 @@
 
 import pytest
 from unittest.mock import MagicMock, patch, AsyncMock
-from coco_b.core.router import MessageRouter
-from coco_b.core.sessions import SessionManager
+from skillforge.core.router import MessageRouter
+from skillforge.core.sessions import SessionManager
 
 
 @pytest.fixture
@@ -18,7 +18,7 @@ def mock_llm():
     llm.config.base_url = "http://localhost"
     llm.config.model = "test-model"
     llm.check_context_size.return_value = {"needs_compaction": False, "total_tokens": 100}
-    llm.chat.return_value = "Hello! I'm coco B."
+    llm.chat.return_value = "Hello! I'm SkillForge."
     llm.estimate_tokens.return_value = 50
     return llm
 
@@ -32,10 +32,10 @@ def router(tmp_path, mock_llm):
     r._todo_handler._data_file = tmp_path / "todos.json"
     r._todo_handler._save_data({})
     # Point file access manager to temp directory
-    from coco_b.core.file_access import FileAccessManager
+    from skillforge.core.file_access import FileAccessManager
     r._file_access = FileAccessManager(project_root=tmp_path)
     # Disable permission system for unit tests (all users get full access)
-    from coco_b.core.user_permissions import PermissionManager
+    from skillforge.core.user_permissions import PermissionManager
     r._permission_manager = PermissionManager(data_dir=tmp_path / "perm_data")
     return r
 

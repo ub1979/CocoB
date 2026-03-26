@@ -3,7 +3,7 @@
 # =============================================================================
 
 import pytest
-from coco_b.core.schedule_handler import ScheduleCommandHandler
+from skillforge.core.schedule_handler import ScheduleCommandHandler
 
 
 @pytest.fixture

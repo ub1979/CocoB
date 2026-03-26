@@ -13,7 +13,7 @@ class TestFileAccessTimingAttack:
 
     def test_password_verification_uses_hmac_compare_digest(self):
         """Password verification should use hmac.compare_digest."""
-        from coco_b.core.file_access import FileAccessManager
+        from skillforge.core.file_access import FileAccessManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             fam = FileAccessManager(project_root=tmpdir)
@@ -29,7 +29,7 @@ class TestFileAccessTimingAttack:
 
     def test_timing_attack_resistance(self):
         """Password verification timing should be similar for correct and wrong passwords."""
-        from coco_b.core.file_access import FileAccessManager
+        from skillforge.core.file_access import FileAccessManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             fam = FileAccessManager(project_root=tmpdir)
@@ -68,7 +68,7 @@ class TestFileAccessTimingAttack:
 
     def test_similar_length_passwords_have_similar_timing(self):
         """Passwords of similar length should have similar verification times."""
-        from coco_b.core.file_access import FileAccessManager
+        from skillforge.core.file_access import FileAccessManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             fam = FileAccessManager(project_root=tmpdir)
@@ -106,7 +106,7 @@ class TestFileAccessTimingAttack:
 
     def test_password_not_set_returns_false(self):
         """verify_password should return False if no password is set."""
-        from coco_b.core.file_access import FileAccessManager
+        from skillforge.core.file_access import FileAccessManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             fam = FileAccessManager(project_root=tmpdir)
@@ -116,7 +116,7 @@ class TestFileAccessTimingAttack:
 
     def test_corrupted_auth_file_returns_false(self):
         """verify_password should return False if auth file is corrupted."""
-        from coco_b.core.file_access import FileAccessManager
+        from skillforge.core.file_access import FileAccessManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             fam = FileAccessManager(project_root=tmpdir)
@@ -133,7 +133,7 @@ class TestFileAccessTimingAttack:
 
     def test_empty_password_fails(self):
         """Empty password should fail verification."""
-        from coco_b.core.file_access import FileAccessManager
+        from skillforge.core.file_access import FileAccessManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             fam = FileAccessManager(project_root=tmpdir)
@@ -149,7 +149,7 @@ class TestFileAccessTimingAttack:
 
     def test_short_password_fails(self):
         """Short password (< 8 chars) should fail setup."""
-        from coco_b.core.file_access import FileAccessManager
+        from skillforge.core.file_access import FileAccessManager
         
         with tempfile.TemporaryDirectory() as tmpdir:
             fam = FileAccessManager(project_root=tmpdir)

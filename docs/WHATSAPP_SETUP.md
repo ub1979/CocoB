@@ -9,11 +9,11 @@
 
 ## Quick Start (UI-Based)
 
-The easiest way to set up WhatsApp is through the coco B desktop UI:
+The easiest way to set up WhatsApp is through the SkillForge desktop UI:
 
-### Step 1: Start coco B
+### Step 1: Start SkillForge
 ```bash
-python coco_b.py
+python skillforge.py
 ```
 
 ### Step 2: Open Settings > WhatsApp
@@ -76,20 +76,20 @@ Comma-separated phone numbers (with country code, no `+`):
                                            │ Webhook
                                            ▼
                                   ┌──────────────────┐
-                                  │   coco B Bot     │
+                                  │   SkillForge Bot     │
                                   │  (Python:3978)   │
                                   └──────────────────┘
 ```
 
 1. **Baileys Service** (Node.js) - Handles WhatsApp Web connection
 2. **Webhook Server** (Python) - Receives messages and sends responses
-3. **coco B Router** - Processes messages with skills and LLM
+3. **SkillForge Router** - Processes messages with skills and LLM
 
 ## Bot Response Prefix
 
 When the bot responds to other users (not yourself), messages are prefixed with:
 ```
-🤖 *coco B:*
+🤖 *SkillForge:*
 Your response here
 ```
 
@@ -206,6 +206,6 @@ For production use, consider the official API:
 
 ---
 
-**Project**: coco B - Persistent Memory AI Chatbot
+**Project**: SkillForge - Persistent Memory AI Chatbot
 **Organization**: Idrak AI Ltd
 **License**: Open Source - Safe Open Community Project

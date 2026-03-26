@@ -8,19 +8,19 @@ import sys
 
 
 class TestCLIEntryPoint:
-    """Test coco-b CLI command."""
+    """Test skillforge CLI command."""
 
     def test_no_args_shows_help(self):
         result = subprocess.run(
-            [sys.executable, "-m", "coco_b"],
+            [sys.executable, "-m", "skillforge"],
             capture_output=True, text=True
         )
-        assert "coco-b ui" in result.stdout or "coco-b ui" in result.stderr
+        assert "skillforge ui" in result.stdout or "skillforge ui" in result.stderr
         assert "gradio" in (result.stdout + result.stderr)
 
     def test_unknown_command(self):
         result = subprocess.run(
-            [sys.executable, "-m", "coco_b", "nonexistent"],
+            [sys.executable, "-m", "skillforge", "nonexistent"],
             capture_output=True, text=True
         )
         assert result.returncode != 0
@@ -28,17 +28,17 @@ class TestCLIEntryPoint:
 
     def test_doctor_runs(self):
         result = subprocess.run(
-            [sys.executable, "-m", "coco_b", "doctor"],
+            [sys.executable, "-m", "skillforge", "doctor"],
             capture_output=True, text=True
         )
         output = result.stdout + result.stderr
-        assert "coco B" in output
+        assert "SkillForge" in output
         assert "Doctor" in output
         assert "[OK]" in output
 
     def test_doctor_checks_core_imports(self):
         result = subprocess.run(
-            [sys.executable, "-m", "coco_b", "doctor"],
+            [sys.executable, "-m", "skillforge", "doctor"],
             capture_output=True, text=True
         )
         output = result.stdout + result.stderr
@@ -48,7 +48,7 @@ class TestCLIEntryPoint:
 
     def test_doctor_checks_skills(self):
         result = subprocess.run(
-            [sys.executable, "-m", "coco_b", "doctor"],
+            [sys.executable, "-m", "skillforge", "doctor"],
             capture_output=True, text=True
         )
         output = result.stdout + result.stderr
@@ -59,20 +59,20 @@ class TestCLIModule:
     """Test __main__.py module directly."""
 
     def test_main_importable(self):
-        from coco_b.__main__ import main
+        from skillforge.__main__ import main
         assert callable(main)
 
     def test_doctor_function_importable(self):
-        from coco_b.__main__ import _run_doctor
+        from skillforge.__main__ import _run_doctor
         assert callable(_run_doctor)
 
 
 class TestConsoleScript:
-    """Test that coco-b console script is registered."""
+    """Test that skillforge console script is registered."""
 
-    def test_coco_b_command_exists(self):
+    def test_skillforge_command_exists(self):
         result = subprocess.run(
-            ["coco-b", "doctor"],
+            ["skillforge", "doctor"],
             capture_output=True, text=True
         )
         output = result.stdout + result.stderr

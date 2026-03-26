@@ -1,7 +1,7 @@
 # Plan: Per-User Permissions & Multi-Agent Routing
 
 ## Context
-coco B currently treats all users equally — anyone who can message the bot gets full access to all tools (email, files, scheduling, MCP, etc.). This is unsafe for running the bot on a shared server (e.g., one WhatsApp SIM serving multiple users). We need a permission system where:
+SkillForge currently treats all users equally — anyone who can message the bot gets full access to all tools (email, files, scheduling, MCP, etc.). This is unsafe for running the bot on a shared server (e.g., one WhatsApp SIM serving multiple users). We need a permission system where:
 - Admin (you) gets full access on any channel
 - Other users get limited capabilities based on their role
 - The LLM's system prompt adapts per user (don't show tools they can't use)
@@ -14,7 +14,7 @@ coco B currently treats all users equally — anyone who can message the bot get
 
 ---
 
-## Step 1: Create `src/coco_b/core/user_permissions.py` (~250 lines)
+## Step 1: Create `src/skillforge/core/user_permissions.py` (~250 lines)
 
 New file with:
 
@@ -118,7 +118,7 @@ Each user entry: role + custom_permissions (grants beyond role) + denied_permiss
 
 ---
 
-## Step 3: Wire into `src/coco_b/core/router.py` (~100 lines changed)
+## Step 3: Wire into `src/skillforge/core/router.py` (~100 lines changed)
 
 ### 3a. Import + init
 - Import `PermissionManager` at top (alongside AuthManager import)
@@ -179,8 +179,8 @@ Add "User Permissions" section listing new commands.
 
 | File | Change |
 |------|--------|
-| `src/coco_b/core/user_permissions.py` | **NEW** — Permission enum, UserRole enum, PermissionManager class |
-| `src/coco_b/core/router.py` | Wire PermissionManager, gate handlers, add 5 new commands |
+| `src/skillforge/core/user_permissions.py` | **NEW** — Permission enum, UserRole enum, PermissionManager class |
+| `src/skillforge/core/router.py` | Wire PermissionManager, gate handlers, add 5 new commands |
 | `tests/test_user_permissions.py` | **NEW** — ~60 tests (unit + router integration) |
 | `data/user_roles.json` | **NEW** — auto-created on first run with default config |
 | `CHANGELOG.md` | Document new feature |

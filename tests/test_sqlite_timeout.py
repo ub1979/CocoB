@@ -15,7 +15,7 @@ class TestSQLiteTimeout:
 
     def test_connection_uses_timeout(self):
         """SQLite connection should use 30 second timeout."""
-        from coco_b.core.memory import SQLiteMemory
+        from skillforge.core.memory import SQLiteMemory
         
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path = os.path.join(tmpdir, "test_memory.db")
@@ -37,7 +37,7 @@ class TestSQLiteTimeout:
 
     def test_connection_handles_concurrent_access(self):
         """Connection timeout should allow handling concurrent access."""
-        from coco_b.core.memory import SQLiteMemory
+        from skillforge.core.memory import SQLiteMemory
         
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path = os.path.join(tmpdir, "test_memory.db")
@@ -86,7 +86,7 @@ class TestSQLiteTimeout:
 
     def test_connection_has_row_factory(self):
         """Connection should have row_factory set to sqlite3.Row."""
-        from coco_b.core.memory import SQLiteMemory
+        from skillforge.core.memory import SQLiteMemory
         
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path = os.path.join(tmpdir, "test_memory.db")
@@ -104,7 +104,7 @@ class TestSQLiteTimeout:
 
     def test_multiple_connections_can_coexist(self):
         """Multiple connections should be able to coexist."""
-        from coco_b.core.memory import SQLiteMemory
+        from skillforge.core.memory import SQLiteMemory
         
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path = os.path.join(tmpdir, "test_memory.db")

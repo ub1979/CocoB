@@ -9,7 +9,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from coco_b.core.scheduler import ScheduledTask, SchedulerManager, ExecutionLog
+from skillforge.core.scheduler import ScheduledTask, SchedulerManager, ExecutionLog
 
 
 # =============================================================================
