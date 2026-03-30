@@ -35,7 +35,7 @@ import logging
 # Import MCP Models
 # =============================================================================
 
-from skillforge.ui.settings.mcp_models import (
+from skillforge.core.mcp_models import (
     MCPServerType,
     MCPConnectionStatus,
     MCPServerConfig,
@@ -75,6 +75,7 @@ ALLOWED_MCP_COMMANDS = frozenset({
 ALLOWED_MCP_PACKAGE_PREFIXES = (
     '@playwright/',           # Playwright browser automation
     '@modelcontextprotocol/', # Official MCP servers
+    '@notionhq/',             # Official Notion MCP server
     '@composio/',             # Composio integrations
     'mcp-',                   # MCP utility packages
 )
@@ -334,7 +335,8 @@ class MCPClient:
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
-            env=env
+            env=env,
+            limit=1024 * 1024,  # 1 MB read buffer (default 64KB too small for large tool lists)
         )
 
         # ==================================
@@ -416,7 +418,8 @@ class MCPClient:
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
-            env=env
+            env=env,
+            limit=1024 * 1024,
         )
 
         # ==================================
@@ -627,7 +630,10 @@ class MCPClient:
         # ==================================
         # Check if process is still running
         if self.process.returncode is not None:
-            raise ConnectionError(f"MCP server process exited with code {self.process.returncode}")
+            self.connected = False
+            self.status = MCPConnectionStatus.ERROR
+            self.error_message = f"Server process exited with code {self.process.returncode}"
+            raise ConnectionError(self.error_message)
 
         try:
             # ==================================
@@ -1044,7 +1050,10 @@ class MCPManager:
         # ==================================
         # Disconnect if connected
         if name in self.servers:
-            asyncio.create_task(self.disconnect_server(name))
+            try:
+                self._run_in_loop(self.disconnect_server(name), timeout=10.0)
+            except Exception:
+                pass
 
         # ==================================
         # Remove from configs

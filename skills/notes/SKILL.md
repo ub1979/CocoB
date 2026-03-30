@@ -12,7 +12,7 @@ Manage personal notes as markdown files in `~/notes/`. Uses the Filesystem MCP s
 ## Prerequisites
 
 - Filesystem MCP server connected with `~/notes` (or equivalent) in allowed paths
-- If Filesystem MCP is not available, reply: "Notes require the Filesystem MCP server with access to your notes directory. Ask your admin to set it up."
+- Check the "Tool Status" section in your system prompt to see if this service is available before proceeding.
 
 ## Note Format
 

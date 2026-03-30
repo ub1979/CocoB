@@ -96,6 +96,7 @@ class SettingsView:
         # Build all section contents (lazy — built once)
         self._section_contents = {
             "appearance": self._create_appearance_section(),
+            "accounts": self._create_accounts_section(),
             "personas": self._create_personas_section(),
             "permissions": self._create_user_permissions_section(),
             "bots": self._create_messaging_bots_group(),
@@ -109,6 +110,7 @@ class SettingsView:
         # Category card grid — the "home" page of settings
         self._categories = [
             ("appearance", icons.PALETTE, "Appearance", "Theme & colors"),
+            ("accounts", icons.EMAIL, "Accounts", "Gmail, Outlook, access"),
             ("personas", icons.PEOPLE, "Personas", "Agents & defaults"),
             ("permissions", icons.SECURITY, "Permissions", "Roles & access"),
             ("bots", icons.FORUM, "Channels", "Telegram, WhatsApp, Slack"),
@@ -211,6 +213,8 @@ class SettingsView:
         # Rebuild live sections from scratch each time they're opened
         if key == "permissions":
             self._section_contents["permissions"] = self._create_user_permissions_section()
+        elif key == "accounts":
+            self._section_contents["accounts"] = self._create_accounts_section()
         elif key == "personas":
             self._refresh_persona_list()
             self._refresh_channel_dropdowns()
@@ -252,6 +256,475 @@ class SettingsView:
         self.page.bgcolor = AppColors.BACKGROUND
         if self.rebuild_callback:
             self.rebuild_callback()
+        self.page.update()
+
+    # =====================================================================
+    # ACCOUNTS — Gmail, Outlook, service access toggles
+    # =====================================================================
+
+    # --- Paths ---
+    _GOOGLE_ACCOUNTS_PATH = Path.home() / ".mcp" / "google-workspace" / ".accounts.json"
+    _GOOGLE_GAUTH_PATH = Path.home() / ".mcp" / "google-workspace" / ".gauth.json"
+    @property
+    def _ACCESS_CONFIG_PATH(self):
+        return Path(project_root) / "data" / "account_access.json"
+
+    def _load_google_accounts(self) -> list:
+        """Load Gmail accounts from ~/.mcp/google-workspace/.accounts.json"""
+        try:
+            if self._GOOGLE_ACCOUNTS_PATH.exists():
+                data = json.loads(self._GOOGLE_ACCOUNTS_PATH.read_text())
+                accounts = data.get("accounts", [])
+                return [a for a in accounts if a and "YOUR_" not in a]
+            return []
+        except Exception:
+            return []
+
+    def _save_google_accounts(self, accounts: list):
+        """Save Gmail accounts to .accounts.json"""
+        self._GOOGLE_ACCOUNTS_PATH.parent.mkdir(parents=True, exist_ok=True)
+        self._GOOGLE_ACCOUNTS_PATH.write_text(
+            json.dumps({"accounts": accounts}, indent=2) + "\n"
+        )
+
+    def _load_access_config(self) -> dict:
+        """Load per-account service access toggles from data/account_access.json"""
+        try:
+            if self._ACCESS_CONFIG_PATH.exists():
+                return json.loads(self._ACCESS_CONFIG_PATH.read_text())
+        except Exception:
+            pass
+        return {}
+
+    def _save_access_config(self, cfg: dict):
+        """Save per-account service access config."""
+        self._ACCESS_CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        self._ACCESS_CONFIG_PATH.write_text(json.dumps(cfg, indent=2) + "\n")
+
+    def _get_mcp_config_path(self) -> Path:
+        return Path(project_root) / "config" / "mcp_config.json"
+
+    def _load_mcp_config(self) -> dict:
+        try:
+            return json.loads(self._get_mcp_config_path().read_text())
+        except Exception:
+            return {"mcpServers": {}}
+
+    def _save_mcp_config(self, cfg: dict):
+        self._get_mcp_config_path().write_text(json.dumps(cfg, indent=2) + "\n")
+
+    def _is_mcp_server_connected(self, server_name: str) -> bool:
+        """Check if an MCP server is currently connected."""
+        if not self.app_state or not hasattr(self.app_state, 'mcp_manager'):
+            return False
+        mgr = self.app_state.mcp_manager
+        if not mgr:
+            return False
+        try:
+            states = mgr.get_server_states()
+            state = states.get(server_name)
+            if state and hasattr(state, 'status'):
+                return state.status.value == "connected"
+        except Exception:
+            pass
+        return False
+
+    def _create_accounts_section(self):
+        """Build the Accounts settings panel with Gmail/Outlook management."""
+        gmail_accounts = self._load_google_accounts()
+        access_cfg = self._load_access_config()
+        mcp_cfg = self._load_mcp_config()
+        outlook_configured = bool(
+            mcp_cfg.get("mcpServers", {}).get("outlook", {}).get("env", {}).get("MS_CLIENT_ID")
+        )
+
+        # --- Connection status badges ---
+        google_connected = self._is_mcp_server_connected("google-workspace")
+        google_has_creds = self._GOOGLE_GAUTH_PATH.exists()
+        outlook_connected = self._is_mcp_server_connected("outlook")
+
+        def _google_status():
+            if google_connected:
+                return ft.Container(
+                    content=ft.Row([ft.Icon(icons.CHECK_CIRCLE, color=AppColors.SUCCESS, size=14),
+                                    ft.Text("Connected", size=11, color=AppColors.SUCCESS)], spacing=4, tight=True),
+                    bgcolor=ft.Colors.with_opacity(0.13, AppColors.SUCCESS),
+                    padding=ft.Padding.symmetric(horizontal=8, vertical=4),
+                    border_radius=ft.BorderRadius.all(12),
+                )
+            elif google_has_creds:
+                return ft.Container(
+                    content=ft.Row([ft.Icon(icons.WARNING_AMBER, color=AppColors.WARNING, size=14),
+                                    ft.Text("Not connected", size=11, color=AppColors.WARNING)], spacing=4, tight=True),
+                    bgcolor=ft.Colors.with_opacity(0.13, AppColors.WARNING),
+                    padding=ft.Padding.symmetric(horizontal=8, vertical=4),
+                    border_radius=ft.BorderRadius.all(12),
+                )
+            else:
+                return ft.Container(
+                    content=ft.Row([ft.Icon(icons.CIRCLE_OUTLINED, color=AppColors.TEXT_MUTED, size=14),
+                                    ft.Text("No credentials", size=11, color=AppColors.TEXT_MUTED)], spacing=4, tight=True),
+                    bgcolor=ft.Colors.with_opacity(0.08, AppColors.TEXT_MUTED),
+                    padding=ft.Padding.symmetric(horizontal=8, vertical=4),
+                    border_radius=ft.BorderRadius.all(12),
+                )
+
+        def _outlook_status():
+            if outlook_connected:
+                return ft.Container(
+                    content=ft.Row([ft.Icon(icons.CHECK_CIRCLE, color=AppColors.SUCCESS, size=14),
+                                    ft.Text("Connected", size=11, color=AppColors.SUCCESS)], spacing=4, tight=True),
+                    bgcolor=ft.Colors.with_opacity(0.13, AppColors.SUCCESS),
+                    padding=ft.Padding.symmetric(horizontal=8, vertical=4),
+                    border_radius=ft.BorderRadius.all(12),
+                )
+            elif outlook_configured:
+                return ft.Container(
+                    content=ft.Row([ft.Icon(icons.WARNING_AMBER, color=AppColors.WARNING, size=14),
+                                    ft.Text("Configured", size=11, color=AppColors.WARNING)], spacing=4, tight=True),
+                    bgcolor=ft.Colors.with_opacity(0.13, AppColors.WARNING),
+                    padding=ft.Padding.symmetric(horizontal=8, vertical=4),
+                    border_radius=ft.BorderRadius.all(12),
+                )
+            else:
+                return ft.Container(
+                    content=ft.Row([ft.Icon(icons.CIRCLE_OUTLINED, color=AppColors.TEXT_MUTED, size=14),
+                                    ft.Text("Not set up", size=11, color=AppColors.TEXT_MUTED)], spacing=4, tight=True),
+                    bgcolor=ft.Colors.with_opacity(0.08, AppColors.TEXT_MUTED),
+                    padding=ft.Padding.symmetric(horizontal=8, vertical=4),
+                    border_radius=ft.BorderRadius.all(12),
+                )
+
+        # ---- Gmail section ----
+        gmail_rows = ft.Column(spacing=4)
+        for email in gmail_accounts:
+            acct_access = access_cfg.get(email, {"email": True, "calendar": True, "contacts": True})
+            gmail_rows.controls.append(self._build_account_row(
+                email, "google", acct_access, access_cfg))
+
+        if not gmail_accounts:
+            gmail_rows.controls.append(
+                ft.Text("No Gmail accounts added yet", size=12, color=AppColors.TEXT_MUTED,
+                        italic=True))
+
+        gmail_section = ft.Column([
+            ft.Row([
+                ft.Icon(icons.EMAIL, color="#EA4335", size=22),
+                ft.Text("Google (Gmail)", size=14, weight=ft.FontWeight.W_600,
+                        color=AppColors.TEXT_PRIMARY),
+                ft.Container(expand=True),
+                _google_status(),
+            ], vertical_alignment=ft.CrossAxisAlignment.CENTER),
+            ft.Container(height=4),
+            gmail_rows,
+            ft.Container(height=8),
+            ft.Row([
+                StyledButton("+ Add Gmail Account", icon=icons.ADD,
+                             on_click=self._add_gmail_dialog, variant="outline"),
+            ]),
+        ], spacing=4)
+
+        # ---- Outlook section ----
+        outlook_email = mcp_cfg.get("mcpServers", {}).get("outlook", {}).get("_email", "")
+        outlook_rows = ft.Column(spacing=4)
+        if outlook_configured:
+            acct_key = outlook_email or "outlook"
+            acct_access = access_cfg.get(acct_key, {"email": True, "calendar": True, "contacts": True})
+            outlook_rows.controls.append(self._build_account_row(
+                acct_key, "outlook", acct_access, access_cfg))
+        else:
+            outlook_rows.controls.append(
+                ft.Text("Not configured — needs Azure app registration", size=12,
+                        color=AppColors.TEXT_MUTED, italic=True))
+
+        outlook_section = ft.Column([
+            ft.Row([
+                ft.Icon(icons.EMAIL, color="#0078D4", size=22),
+                ft.Text("Outlook / Hotmail", size=14, weight=ft.FontWeight.W_600,
+                        color=AppColors.TEXT_PRIMARY),
+                ft.Container(expand=True),
+                _outlook_status(),
+            ], vertical_alignment=ft.CrossAxisAlignment.CENTER),
+            ft.Container(height=4),
+            outlook_rows,
+            ft.Container(height=8),
+            ft.Row([
+                StyledButton(
+                    "Configure Outlook" if not outlook_configured else "Edit Outlook",
+                    icon=icons.SETTINGS,
+                    on_click=self._configure_outlook_dialog, variant="outline"),
+            ]),
+        ], spacing=4)
+
+        content = ft.Column([
+            gmail_section,
+            ft.Divider(height=1, color=AppColors.BORDER),
+            ft.Container(height=8),
+            outlook_section,
+            ft.Divider(height=1, color=AppColors.BORDER),
+            ft.Container(height=8),
+            ft.Text("Service access controls what the bot can do with each account. "
+                     "Restart the app after changing account settings.",
+                     size=11, color=AppColors.TEXT_MUTED),
+        ], spacing=4)
+
+        return SettingsPanel(title="Accounts", icon=icons.EMAIL,
+                             subtitle="Email accounts and service access",
+                             content=content)
+
+    def _build_account_row(self, email: str, provider: str, acct_access: dict,
+                           full_cfg: dict) -> ft.Container:
+        """Build a single account row with email, service toggles, and remove button."""
+        services = [
+            ("email", icons.EMAIL, "Email"),
+            ("calendar", icons.CALENDAR_TODAY, "Calendar"),
+            ("contacts", icons.CONTACTS, "Contacts"),
+        ]
+
+        toggle_row = ft.Row(spacing=4, tight=True)
+        for svc_key, svc_icon, svc_label in services:
+            is_on = acct_access.get(svc_key, True)
+            chip = ft.Container(
+                content=ft.Row([
+                    ft.Icon(svc_icon, color=AppColors.SUCCESS if is_on else AppColors.TEXT_MUTED, size=14),
+                    ft.Text(svc_label, size=11,
+                            color=AppColors.TEXT_PRIMARY if is_on else AppColors.TEXT_MUTED),
+                ], spacing=4, tight=True),
+                bgcolor=ft.Colors.with_opacity(0.1, AppColors.SUCCESS) if is_on
+                    else ft.Colors.with_opacity(0.05, AppColors.TEXT_MUTED),
+                padding=ft.Padding.symmetric(horizontal=8, vertical=4),
+                border_radius=ft.BorderRadius.all(12),
+                border=ft.Border.all(1, AppColors.SUCCESS if is_on else AppColors.BORDER),
+                on_click=lambda e, em=email, sk=svc_key, prov=provider: self._toggle_account_service(em, sk, prov),
+                ink=True,
+            )
+            toggle_row.controls.append(chip)
+
+        remove_btn = ft.IconButton(
+            icon=icons.DELETE, icon_color=AppColors.ERROR, icon_size=18,
+            tooltip="Remove account",
+            on_click=lambda e, em=email, prov=provider: self._remove_account(em, prov),
+        )
+
+        return ft.Container(
+            content=ft.Column([
+                ft.Row([
+                    ft.Icon(icons.ACCOUNT_CIRCLE, color=AppColors.TEXT_SECONDARY, size=20),
+                    ft.Text(email, size=13, weight=ft.FontWeight.W_500,
+                            color=AppColors.TEXT_PRIMARY, expand=True),
+                    remove_btn,
+                ], vertical_alignment=ft.CrossAxisAlignment.CENTER),
+                ft.Container(
+                    content=toggle_row,
+                    padding=ft.Padding.only(left=28),
+                ),
+            ], spacing=4),
+            padding=ft.Padding.all(8),
+            bgcolor=AppColors.SURFACE_VARIANT,
+            border_radius=ft.BorderRadius.all(8),
+        )
+
+    def _toggle_account_service(self, email: str, service_key: str, provider: str):
+        """Toggle a service (email/calendar/contacts) on/off for an account."""
+        cfg = self._load_access_config()
+        acct = cfg.setdefault(email, {"email": True, "calendar": True, "contacts": True})
+        acct[service_key] = not acct.get(service_key, True)
+        self._save_access_config(cfg)
+        # Refresh the UI
+        self._section_contents["accounts"] = self._create_accounts_section()
+        self._detail_body.content = self._section_contents["accounts"]
+        self.page.update()
+
+    def _add_gmail_dialog(self, e):
+        """Dialog to add a new Gmail account."""
+        email_field = ft.TextField(
+            label="Gmail Address", hint_text="you@gmail.com",
+            border_color=AppColors.BORDER, color=AppColors.TEXT_PRIMARY,
+            bgcolor=AppColors.SURFACE, keyboard_type=ft.KeyboardType.EMAIL,
+        )
+
+        def close_dialog(e):
+            dialog.open = False
+            self.page.update()
+
+        def add_account(e):
+            email = (email_field.value or "").strip().lower()
+            if not email or "@" not in email:
+                self._show_snackbar("Please enter a valid email address", error=True)
+                return
+            accounts = self._load_google_accounts()
+            if email in accounts:
+                self._show_snackbar(f"{email} is already added", error=True)
+                return
+            accounts.append(email)
+            self._save_google_accounts(accounts)
+            # Init default access
+            cfg = self._load_access_config()
+            cfg.setdefault(email, {"email": True, "calendar": True, "contacts": True})
+            self._save_access_config(cfg)
+            dialog.open = False
+            self._show_snackbar(f"Added {email}")
+            self._section_contents["accounts"] = self._create_accounts_section()
+            self._detail_body.content = self._section_contents["accounts"]
+            self.page.update()
+
+        dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text("Add Gmail Account", color=AppColors.TEXT_PRIMARY),
+            content=ft.Column([
+                email_field,
+                ft.Container(height=4),
+                ft.Text("After adding, restart the app and complete the Google OAuth "
+                         "authorization in your browser when prompted.",
+                         size=11, color=AppColors.TEXT_MUTED),
+            ], tight=True, spacing=8, width=400),
+            actions=[
+                ft.TextButton("Cancel", on_click=close_dialog),
+                StyledButton("Add Account", on_click=add_account),
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+            bgcolor=AppColors.SURFACE,
+        )
+        self.page.overlay.append(dialog)
+        dialog.open = True
+        self.page.update()
+
+    def _remove_account(self, email: str, provider: str):
+        """Remove an email account after confirmation."""
+        def close_dialog(e):
+            dialog.open = False
+            self.page.update()
+
+        def confirm_remove(e):
+            if provider == "google":
+                accounts = self._load_google_accounts()
+                accounts = [a for a in accounts if a != email]
+                self._save_google_accounts(accounts)
+            elif provider == "outlook":
+                mcp = self._load_mcp_config()
+                if "outlook" in mcp.get("mcpServers", {}):
+                    mcp["mcpServers"]["outlook"]["env"]["MS_CLIENT_ID"] = ""
+                    mcp["mcpServers"]["outlook"]["env"]["MS_CLIENT_SECRET"] = ""
+                    mcp["mcpServers"]["outlook"]["enabled"] = False
+                    if "_email" in mcp["mcpServers"]["outlook"]:
+                        del mcp["mcpServers"]["outlook"]["_email"]
+                    self._save_mcp_config(mcp)
+            # Remove access config
+            cfg = self._load_access_config()
+            cfg.pop(email, None)
+            self._save_access_config(cfg)
+            dialog.open = False
+            self._show_snackbar(f"Removed {email}")
+            self._section_contents["accounts"] = self._create_accounts_section()
+            self._detail_body.content = self._section_contents["accounts"]
+            self.page.update()
+
+        dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text(f"Remove {email}?", color=AppColors.TEXT_PRIMARY),
+            content=ft.Text("This will remove the account from SkillForge. "
+                            "You may need to restart the app.",
+                            color=AppColors.TEXT_SECONDARY),
+            actions=[
+                ft.TextButton("Cancel", on_click=close_dialog),
+                ft.TextButton("Remove", style=ft.ButtonStyle(color=AppColors.ERROR),
+                              on_click=confirm_remove),
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+            bgcolor=AppColors.SURFACE,
+        )
+        self.page.overlay.append(dialog)
+        dialog.open = True
+        self.page.update()
+
+    def _configure_outlook_dialog(self, e):
+        """Dialog to configure Outlook/Hotmail via Azure app credentials."""
+        mcp = self._load_mcp_config()
+        outlook_cfg = mcp.get("mcpServers", {}).get("outlook", {}).get("env", {})
+
+        email_field = ft.TextField(
+            label="Hotmail / Outlook Email", hint_text="you@hotmail.com",
+            value=mcp.get("mcpServers", {}).get("outlook", {}).get("_email", ""),
+            border_color=AppColors.BORDER, color=AppColors.TEXT_PRIMARY,
+            bgcolor=AppColors.SURFACE,
+        )
+        client_id_field = ft.TextField(
+            label="Azure Client ID", hint_text="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+            value=outlook_cfg.get("MS_CLIENT_ID", ""),
+            border_color=AppColors.BORDER, color=AppColors.TEXT_PRIMARY,
+            bgcolor=AppColors.SURFACE,
+        )
+        client_secret_field = ft.TextField(
+            label="Azure Client Secret", password=True, can_reveal_password=True,
+            value=outlook_cfg.get("MS_CLIENT_SECRET", ""),
+            border_color=AppColors.BORDER, color=AppColors.TEXT_PRIMARY,
+            bgcolor=AppColors.SURFACE,
+        )
+
+        def close_dialog(e):
+            dialog.open = False
+            self.page.update()
+
+        def save_outlook(e):
+            cid = (client_id_field.value or "").strip()
+            secret = (client_secret_field.value or "").strip()
+            email = (email_field.value or "").strip()
+            if not cid or not secret:
+                self._show_snackbar("Client ID and Secret are required", error=True)
+                return
+            mcp_data = self._load_mcp_config()
+            servers = mcp_data.setdefault("mcpServers", {})
+            if "outlook" not in servers:
+                servers["outlook"] = {
+                    "type": "stdio", "enabled": True,
+                    "description": "Outlook/Hotmail via Microsoft Graph API",
+                    "command": "npx",
+                    "args": ["-y", "outlook-mcp"],
+                    "env": {
+                        "MS_CLIENT_ID": "", "MS_CLIENT_SECRET": "",
+                        "MS_REDIRECT_URI": "http://localhost:3333/auth/callback",
+                        "MS_TENANT_ID": "common",
+                    },
+                }
+            servers["outlook"]["env"]["MS_CLIENT_ID"] = cid
+            servers["outlook"]["env"]["MS_CLIENT_SECRET"] = secret
+            servers["outlook"]["enabled"] = True
+            if email:
+                servers["outlook"]["_email"] = email
+            self._save_mcp_config(mcp_data)
+            # Set up access config
+            if email:
+                cfg = self._load_access_config()
+                cfg.setdefault(email, {"email": True, "calendar": True, "contacts": True})
+                self._save_access_config(cfg)
+            dialog.open = False
+            self._show_snackbar("Outlook configured — restart to connect")
+            self._section_contents["accounts"] = self._create_accounts_section()
+            self._detail_body.content = self._section_contents["accounts"]
+            self.page.update()
+
+        dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text("Configure Outlook / Hotmail", color=AppColors.TEXT_PRIMARY),
+            content=ft.Column([
+                email_field,
+                client_id_field,
+                client_secret_field,
+                ft.Container(height=4),
+                ft.Text("Register an app at portal.azure.com > App registrations > "
+                         "Personal accounts. Add Graph API permissions: "
+                         "Mail.ReadWrite, Calendars.ReadWrite.",
+                         size=11, color=AppColors.TEXT_MUTED),
+            ], tight=True, spacing=12, width=500),
+            actions=[
+                ft.TextButton("Cancel", on_click=close_dialog),
+                StyledButton("Save", on_click=save_outlook),
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+            bgcolor=AppColors.SURFACE,
+        )
+        self.page.overlay.append(dialog)
+        dialog.open = True
         self.page.update()
 
     # =====================================================================

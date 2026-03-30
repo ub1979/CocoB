@@ -44,6 +44,9 @@ class ChatView:
         self._is_processing = False
         self._typing_row: Optional[ft.Row] = None
         self._pending_attachments: list = []  # List of Attachment objects
+        self._suggestions: list = []  # Current popup suggestions
+        self._selected_index: int = 0  # Highlighted index in popup
+        self._focus_lock_until: float = 0.0
 
     def build(self) -> ft.Column:
         """Build and return the chat view."""
@@ -111,7 +114,9 @@ class ChatView:
         self.message_input = ft.TextField(
             hint_text="Type a message or / for commands...",
             expand=True, multiline=True, min_lines=1, max_lines=3,
-            on_submit=self._send_message, on_change=self._on_input_change,
+            on_submit=self._send_message,
+            on_change=self._on_input_change,
+            on_blur=self._on_input_blur,
             border_color=AppColors.BORDER,
             focused_border_color=AppColors.SECONDARY,
             color=AppColors.TEXT_PRIMARY,
@@ -145,6 +150,9 @@ class ChatView:
             padding=ft.Padding.only(left=8, right=8, top=4, bottom=4),
             visible=False,
         )
+
+        # Register keyboard handler for Tab/Arrow navigation in skill popup
+        self.page.on_keyboard_event = self._on_keyboard
 
         self.skills_popup = ft.Column(controls=[], spacing=2, visible=False)
         self.skills_popup_container = ft.Container(
@@ -280,8 +288,13 @@ class ChatView:
 
     def _on_input_change(self, e):
         """Show skill suggestions when typing /."""
-        text = e.control.value
-        if text.startswith("/"):
+        text = e.control.value or ""
+        show_popup = False
+        popup_changed = False
+        previous_visible = self.skills_popup.visible
+        previous_suggestions = list(self._suggestions)
+
+        if text.startswith("/") and " " not in text:
             cmd = text[1:].lower()
             suggestions = []
             builtins = [
@@ -290,43 +303,152 @@ class ChatView:
                 ("stats", "Show session statistics"),
                 ("skills", "List all skills"),
             ]
+
+            has_exact = False
             for name, desc in builtins:
-                if cmd == "" or name.startswith(cmd):
+                if cmd and name == cmd:
+                    has_exact = True
+                elif cmd == "" or name.startswith(cmd):
                     suggestions.append((name, desc, False))
             if self.skills_manager:
                 for skill in self.skills_manager.get_user_invocable_skills():
-                    if cmd == "" or skill.name.lower().startswith(cmd):
+                    if cmd and skill.name.lower() == cmd:
+                        has_exact = True
+                    elif cmd == "" or skill.name.lower().startswith(cmd):
                         emoji = f"{skill.emoji} " if skill.emoji else ""
                         suggestions.append((skill.name, f"{emoji}{skill.description}", True))
-            if suggestions:
-                self.skills_popup.controls.clear()
-                for name, desc, is_skill in suggestions[:8]:
-                    btn = ft.TextButton(
-                        content=ft.Row([
-                            ft.Text(f"/{name}", weight=ft.FontWeight.BOLD, size=13, color=AppColors.PRIMARY),
-                            ft.Text(f" - {desc}", size=12, color=AppColors.TEXT_SECONDARY),
-                        ]),
-                        on_click=lambda e, n=name: self._select_skill(n),
-                    )
-                    self.skills_popup.controls.append(btn)
-                self.skills_popup.visible = True
-                self.skills_popup_container.visible = True
+
+            if suggestions and not has_exact:
+                self._suggestions = suggestions[:8]
+                self._selected_index = 0
+                self._rebuild_popup_items()
+                show_popup = True
             else:
-                self.skills_popup.visible = False
-                self.skills_popup_container.visible = False
-        else:
+                self._suggestions = []
+                self._selected_index = 0
+
+        popup_changed = (
+            previous_visible != show_popup or
+            previous_suggestions != self._suggestions
+        )
+        self.skills_popup.visible = show_popup
+        self.skills_popup_container.visible = show_popup
+
+        if popup_changed:
+            self._update_popup_controls()
+            self._lock_input_focus()
+
+    def _on_input_blur(self, e):
+        """Keep slash-command typing active even if popup updates steal focus."""
+        if self._should_keep_input_focus():
+            self._schedule_input_focus()
+
+    def _rebuild_popup_items(self):
+        """Rebuild popup items as plain non-focusable containers."""
+        self.skills_popup.controls.clear()
+        for idx, (name, desc, _is_skill) in enumerate(self._suggestions):
+            row = ft.Container(
+                content=ft.Row([
+                    ft.Text(f"/{name}", weight=ft.FontWeight.BOLD,
+                            size=13, color=AppColors.PRIMARY),
+                    ft.Text(f" - {desc}", size=12,
+                            color=AppColors.TEXT_SECONDARY),
+                ], spacing=4),
+                on_click=lambda _e, n=name: self._select_skill(n),
+                padding=ft.Padding.symmetric(horizontal=8, vertical=6),
+                border_radius=ft.BorderRadius.all(6),
+                bgcolor=AppColors.SURFACE_VARIANT if idx == self._selected_index else None,
+            )
+            self.skills_popup.controls.append(row)
+
+    def _on_keyboard(self, e: ft.KeyboardEvent):
+        """Handle Tab/Arrow keys for skill popup selection."""
+        if not self.skills_popup.visible or not self._suggestions:
+            return
+
+        if e.key == "Tab":
+            name = self._suggestions[self._selected_index][0]
+            self._select_skill(name)
+        elif e.key == "Arrow Down":
+            self._selected_index = (self._selected_index + 1) % len(self._suggestions)
+            self._update_highlight()
+        elif e.key == "Arrow Up":
+            self._selected_index = (self._selected_index - 1) % len(self._suggestions)
+            self._update_highlight()
+        elif e.key == "Escape":
             self.skills_popup.visible = False
             self.skills_popup_container.visible = False
-        self.page.update()
-        # Restore focus to input after popup visibility change
-        self.message_input.focus()
+            self._suggestions = []
+            self._update_popup_controls()
+            self._schedule_input_focus()
+
+    def _update_highlight(self):
+        """Update visual highlight on the selected suggestion."""
+        for i, ctrl in enumerate(self.skills_popup.controls):
+            ctrl.bgcolor = AppColors.SURFACE_VARIANT if i == self._selected_index else None
+        self._update_popup_controls()
+        self._schedule_input_focus()
 
     def _select_skill(self, skill_name: str):
+        """Insert selected skill into input and close popup."""
         self.message_input.value = f"/{skill_name} "
-        self.message_input.focus()
         self.skills_popup.visible = False
         self.skills_popup_container.visible = False
-        self.page.update()
+        self._suggestions = []
+        self._update_input_and_popup()
+        self._lock_input_focus()
+
+    def _update_popup_controls(self):
+        """Refresh only popup-related controls to avoid full-page focus churn."""
+        try:
+            self.page.update(self.skills_popup_container)
+        except Exception:
+            try:
+                self.page.update()
+            except Exception:
+                pass
+
+    def _update_input_and_popup(self):
+        """Refresh the chat input and popup without forcing a full page redraw."""
+        try:
+            self.page.update(self.message_input, self.skills_popup_container)
+        except Exception:
+            try:
+                self.page.update()
+            except Exception:
+                pass
+
+    def _should_keep_input_focus(self) -> bool:
+        """Return True while slash-command interactions should own keyboard focus."""
+        text = self.message_input.value or ""
+        if self.skills_popup.visible:
+            return True
+        if time.monotonic() < self._focus_lock_until:
+            return True
+        return text.startswith("/") and " " not in text
+
+    def _lock_input_focus(self, duration: float = 0.4):
+        """Keep focus on the input for a short window to beat Tab traversal."""
+        self._focus_lock_until = time.monotonic() + duration
+        self._schedule_input_focus()
+
+    def _schedule_input_focus(self):
+        """Restore chat input focus after popup updates that steal the caret."""
+        async def _restore_focus():
+            for delay in (0.01, 0.05, 0.15):
+                await asyncio.sleep(delay)
+                try:
+                    await self.message_input.focus()
+                except TypeError:
+                    # Some Flet versions return non-awaitable from focus()
+                    pass
+                except Exception:
+                    pass
+
+        try:
+            self.page.run_task(_restore_focus)
+        except Exception:
+            pass
 
     # ── Send & Process ───────────────────────────────────────────────────
 
@@ -346,10 +468,16 @@ class ChatView:
 
         self.message_input.value = ""
         self._clear_pending_attachments()
+        # Close any open popup and refocus input
+        self.skills_popup.visible = False
+        self.skills_popup_container.visible = False
+        self._suggestions = []
         self.page.update()
+        self._schedule_input_focus()
 
         if text and text.startswith("/") and self.router and not has_attachments:
             is_skill, skill_name, remaining = self.router.is_skill_invocation(text)
+            print(f"[chat] _send_message: text='{text}', is_skill={is_skill}, skill_name='{skill_name}'")
             if not is_skill:
                 self._handle_command(text)
                 return
@@ -369,6 +497,7 @@ class ChatView:
     async def _process_bot_response(self, user_message: str, attachments=None):
         """Process bot response using streaming on Flet's event loop."""
         if self._is_processing:
+            print(f"[chat] _process_bot_response SKIPPED (already processing): '{user_message[:50]}'")
             return
         self._is_processing = True
         self._show_typing_indicator()
@@ -380,11 +509,53 @@ class ChatView:
                 skill_context = ""
                 effective_message = user_message
 
-                if is_skill:
-                    skill_context = self.router.get_skill_context(skill_name)
-                    effective_message = remaining if remaining else f"Execute the {skill_name} skill"
+                # Auto-detect skill intent from natural language (no slash prefix)
+                if not is_skill:
+                    msg_lower = user_message.lower()
+                    _email_kw = (
+                        "email", "inbox", "mail", "unread", "sent me",
+                        "message from", "latest email", "check my mail",
+                        "any new email", "send an email", "write an email",
+                    )
+                    _cal_kw = (
+                        "calendar", "calander", "calender", "calandar",
+                        "schedule", "meeting", "appointment", "event",
+                        "what's on today", "what's on tomorrow",
+                        "do i have any", "am i free", "any plans",
+                        "book a meeting", "google cal",
+                    )
+                    _notion_kw = (
+                        "notion", "my list", "my_list", "my:list",
+                        "todo list", "todolist", "to-do",
+                        "add to list", "put in list", "shopping list",
+                    )
+                    if any(k in msg_lower for k in _email_kw):
+                        is_skill, skill_name, remaining = True, "email", user_message
+                    elif any(k in msg_lower for k in _cal_kw):
+                        is_skill, skill_name, remaining = True, "calendar", user_message
+                    elif any(k in msg_lower for k in _notion_kw):
+                        is_skill, skill_name, remaining = True, "notion", user_message
 
-                    if skill_name == "google-search":
+                print(f"[chat] _process_bot_response: msg='{user_message}', is_skill={is_skill}, skill='{skill_name}', remaining='{remaining}'")
+
+                if is_skill:
+                    # Direct-execution skills: email, calendar, notion, etc.
+                    # ALWAYS execute directly — no LLM guessing.
+                    if self.router._skill_executor.can_execute_directly(skill_name):
+                        print(f"[chat] DIRECT EXEC: skill={skill_name}, args='{remaining}'")
+                        try:
+                            success, result = await asyncio.to_thread(
+                                self.router._skill_executor.execute, skill_name, remaining
+                            )
+                            print(f"[chat] DIRECT EXEC result: success={success}, len={len(result)}")
+                            self._update_bot_message(result, is_partial=False)
+                            return
+                        except Exception as exc:
+                            print(f"[chat] DIRECT EXEC error: {exc}")
+                            self._update_bot_message(f"**Error:** {exc}", is_partial=False)
+                            return
+
+                    elif skill_name == "google-search":
                         if self.mcp_manager and self.mcp_manager.is_connected('playwright'):
                             query = remaining if remaining else "google search test"
                             search_results = await asyncio.to_thread(self._execute_google_search, query)
@@ -406,20 +577,12 @@ class ChatView:
                         elif self.mcp_manager and not self.mcp_manager.is_connected('playwright'):
                             skill_context += "\n\n**ERROR**: Playwright MCP is not connected. Please go to MCP Tools tab and connect Playwright first."
 
-                    elif skill_name == "email":
-                        if self.mcp_manager and self.mcp_manager.is_connected('google-workspace'):
-                            result = await asyncio.to_thread(self._execute_email, remaining)
-                            if result:
-                                self._update_bot_message(result, is_partial=False)
-                                return
+                    else:
+                        # Other skills — just inject skill context for LLM
+                        skill_context = self.router.get_skill_context(skill_name)
+                        effective_message = remaining if remaining else user_message
 
-                    elif skill_name == "calendar":
-                        if self.mcp_manager and self.mcp_manager.is_connected('google-workspace'):
-                            result = await asyncio.to_thread(self._execute_calendar, remaining)
-                            if result:
-                                self._update_bot_message(result, is_partial=False)
-                                return
-
+                print(f"[chat] Sending to router stream: effective_message='{effective_message[:80]}', has_skill_context={bool(skill_context)}")
                 full_text = ""
                 replace_marker = "\n\n<!--REPLACE_RESPONSE-->\n"
                 stream_kwargs = dict(
@@ -474,6 +637,22 @@ class ChatView:
         """Replace typing indicator (or last partial) with the response."""
         self._hide_typing_indicator()
 
+        # Intercept: if the LLM output contains a slash command, execute it
+        # instead of showing it to the user as text.
+        # _is_auto_executing prevents recursion when the executor's result
+        # is displayed via this same method.
+        if (not is_partial and self.router
+                and not getattr(self, '_is_auto_executing', False)):
+            import re as _re
+            m = _re.search(r'`?(/(email|calendar|notion|browse)\s*[^`]*)`?', text)
+            if m:
+                cmd_text = m.group(1).strip().rstrip('`')
+                is_skill, skill_name, remaining = self.router.is_skill_invocation(cmd_text)
+                if is_skill and self.router._skill_executor.can_execute_directly(skill_name):
+                    print(f"[chat] AUTO-EXEC intercepted LLM command: {cmd_text}")
+                    self.page.run_task(self._auto_execute_skill, skill_name, remaining)
+                    return
+
         # Also remove any previous partial bot response
         if self.messages_list.controls:
             last_msg = self.messages_list.controls[-1]
@@ -509,8 +688,24 @@ class ChatView:
         self.messages_list.controls.append(new_msg)
         try:
             self.page.update()
+            # Refocus input after final bot message so user can keep typing
+            if not is_partial:
+                self._schedule_input_focus()
         except Exception:
             pass
+
+    async def _auto_execute_skill(self, skill_name: str, args: str):
+        """Auto-execute a slash command the LLM suggested instead of showing it."""
+        self._is_auto_executing = True
+        try:
+            success, result = await asyncio.to_thread(
+                self.router._skill_executor.execute, skill_name, args
+            )
+            self._update_bot_message(result, is_partial=False)
+        except Exception as ex:
+            self._update_bot_message(f"**Error:** {ex}", is_partial=False)
+        finally:
+            self._is_auto_executing = False
 
     # ── Commands ─────────────────────────────────────────────────────────
 
@@ -525,6 +720,7 @@ class ChatView:
                     ChatMessage(text=response, is_user=False, timestamp=datetime.now().strftime("%H:%M"))
                 )
                 self.page.update()
+                self._schedule_input_focus()
                 return
             response = self.router.handle_command(cmd, session_key)
         else:
@@ -540,6 +736,7 @@ class ChatView:
                 ChatMessage(text=response, is_user=False, timestamp=datetime.now().strftime("%H:%M"))
             )
             self.page.update()
+            self._schedule_input_focus()
 
     def _get_stats_text(self):
         if not self.session_manager:
@@ -610,66 +807,6 @@ class ChatView:
             except Exception:
                 pass
             return f"Error executing search: {str(e)}"
-
-    def _execute_email(self, command: str) -> str:
-        try:
-            import re
-            cmd = command.lower().strip()
-            if cmd.startswith("check") or cmd.startswith("inbox") or cmd == "":
-                result = self.mcp_manager.call_tool_sync("google-workspace", "list-emails", {"maxResults": 5})
-                return f"**Recent Emails:**\n\n{self._extract_mcp_result(result)}"
-            elif cmd.startswith("unread"):
-                result = self.mcp_manager.call_tool_sync("google-workspace", "list-emails", {"query": "is:unread", "maxResults": 10})
-                return f"**Unread Emails:**\n\n{self._extract_mcp_result(result)}"
-            elif cmd.startswith("search "):
-                query = command[7:].strip()
-                result = self.mcp_manager.call_tool_sync("google-workspace", "search-emails", {"query": query, "maxResults": 10})
-                return f"**Search Results for '{query}':**\n\n{self._extract_mcp_result(result)}"
-            elif cmd.startswith("send "):
-                to_match = re.search(r'to\s+(\S+)', command, re.IGNORECASE)
-                subject_match = re.search(r'subject\s+["\']([^"\']+)["\']', command, re.IGNORECASE)
-                body_match = re.search(r'body\s+["\']([^"\']+)["\']', command, re.IGNORECASE)
-                if to_match:
-                    to_email = to_match.group(1)
-                    subject = subject_match.group(1) if subject_match else "No Subject"
-                    body = body_match.group(1) if body_match else ""
-                    self.mcp_manager.call_tool_sync("google-workspace", "send-email", {"to": to_email, "subject": subject, "body": body})
-                    return f"Email sent to {to_email}"
-                return "Could not parse email. Use: /email send to email@example.com subject \"Subject\" body \"Message\""
-            return "**Email Commands:**\n- `/email` or `/email inbox` - Check inbox\n- `/email unread` - Show unread\n- `/email search <query>` - Search emails\n- `/email send to <email> subject \"...\" body \"...\"`"
-        except Exception as e:
-            return f"Email error: {str(e)}"
-
-    def _execute_calendar(self, command: str) -> str:
-        try:
-            cmd = command.lower().strip()
-            import re
-            if cmd == "" or cmd == "today" or "today" in cmd:
-                result = self.mcp_manager.call_tool_sync("google-workspace", "list-events", {"timeMin": "today", "maxResults": 10})
-                events = self._extract_mcp_result(result)
-                return "No events scheduled for today." if not events or "no events" in events.lower() else f"**Today's Events:**\n\n{events}"
-            elif "tomorrow" in cmd:
-                result = self.mcp_manager.call_tool_sync("google-workspace", "list-events", {"timeMin": "tomorrow", "maxResults": 10})
-                events = self._extract_mcp_result(result)
-                return "No events scheduled for tomorrow." if not events or "no events" in events.lower() else f"**Tomorrow's Events:**\n\n{events}"
-            elif "week" in cmd:
-                result = self.mcp_manager.call_tool_sync("google-workspace", "list-events", {"timeMin": "today", "timeMax": "+7d", "maxResults": 20})
-                events = self._extract_mcp_result(result)
-                return "No events scheduled this week." if not events or "no events" in events.lower() else f"**This Week's Events:**\n\n{events}"
-            elif cmd.startswith("create "):
-                title_match = re.search(r'["\']([^"\']+)["\']', command)
-                if title_match:
-                    title = title_match.group(1)
-                    time_part = command[command.find(title_match.group(0)) + len(title_match.group(0)):].strip()
-                    self.mcp_manager.call_tool_sync("google-workspace", "create-event", {"title": title, "when": time_part if time_part else "tomorrow"})
-                    return f"Created: {title}"
-                return "Use: /calendar create \"Event Name\" tomorrow at 3pm"
-            else:
-                result = self.mcp_manager.call_tool_sync("google-workspace", "list-events", {"timeMin": "today", "maxResults": 10})
-                events = self._extract_mcp_result(result)
-                return "No events scheduled for today." if not events or "no events" in events.lower() else f"**Today's Events:**\n\n{events}"
-        except Exception as e:
-            return f"Calendar error: {str(e)}"
 
     def inject_scheduled_message(self, message: str):
         """Inject a message from the scheduler into the chat UI (thread-safe)."""

@@ -12,7 +12,7 @@ Interact with GitHub repositories through chat. Use the GitHub MCP tools when av
 ## Prerequisites
 
 - GitHub MCP server connected with a valid personal access token
-- If GitHub MCP is not available, reply: "GitHub integration isn't connected yet. Ask your admin to set up the GitHub MCP server."
+- Check the "Tool Status" section in your system prompt to see if this service is available before proceeding.
 
 ## Operations
 

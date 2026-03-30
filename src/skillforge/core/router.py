@@ -39,6 +39,8 @@ from skillforge.core.memory import SQLiteMemory
 from skillforge.core.mcp_tools import MCPToolHandler
 from skillforge.core.schedule_handler import ScheduleCommandHandler
 from skillforge.core.todo_handler import TodoCommandHandler
+from skillforge.core.track_handler import TrackCommandHandler
+from skillforge.core.checklist_handler import ChecklistCommandHandler
 from skillforge.core.skill_creator_handler import SkillCreatorHandler
 from skillforge.core.skill_executor import SkillExecutor
 from skillforge.core.file_access import FileAccessManager
@@ -132,6 +134,16 @@ class MessageRouter:
         self._todo_handler = TodoCommandHandler()
 
         # ==================================
+        # Initialize track command handler (personal data tracker)
+        # ==================================
+        self._track_handler = TrackCommandHandler()
+
+        # ==================================
+        # Initialize checklist command handler
+        # ==================================
+        self._checklist_handler = ChecklistCommandHandler()
+
+        # ==================================
         # Initialize skill creator handler
         # ==================================
         self._skill_creator_handler = SkillCreatorHandler(self.personality.skills_manager)
@@ -221,6 +233,23 @@ class MessageRouter:
         except OSError:
             pass
         return mtime
+
+    @staticmethod
+    def _date_context() -> str:
+        """Return current date/time string for the system prompt."""
+        from datetime import datetime, timezone
+        try:
+            from skillforge.core.skill_executor import SkillExecutor
+            tz_name = SkillExecutor._CALENDAR_TZ
+            from zoneinfo import ZoneInfo
+            now = datetime.now(ZoneInfo(tz_name))
+        except Exception:
+            now = datetime.now()
+            tz_name = "local"
+        return (
+            f"\n\nCurrent date and time: {now.strftime('%A, %d %B %Y, %H:%M')} "
+            f"({tz_name})"
+        )
 
     def _get_system_prompt_cached(self, user_id: Optional[str] = None, channel: Optional[str] = None) -> str:
         """Return cached system prompt, re-read only if personality files changed.
@@ -388,6 +417,66 @@ class MessageRouter:
             )
 
         return hints
+
+    # =========================================================================
+    # Tool availability — tell the LLM what's actually connected
+    # =========================================================================
+    # Maps skill names to MCP servers that can provide them (any one suffices)
+    _SKILL_MCP_SERVERS = {
+        "email": ["google-workspace", "outlook", "ms365", "composio"],
+        "calendar": ["google-workspace", "outlook", "ms365", "composio"],
+        "browse": ["playwright"],
+        "google-search": ["playwright"],
+        "news": ["playwright"],
+        "github": ["github"],
+        "notes": ["filesystem"],
+        "files": ["filesystem"],
+        "social": ["composio", "playwright"],
+    }
+
+    def _build_tool_availability_hint(self) -> str:
+        """Build a prompt section telling the LLM which tool-dependent skills are usable.
+
+        This prevents the LLM from fabricating results for actions it cannot perform.
+        """
+        if not self._mcp_manager:
+            return (
+                "\n\n## Tool Status\n"
+                "MCP is not configured. Skills that require external tools "
+                "(/email, /calendar, /browse) are NOT available. "
+                "If the user asks to perform these actions, tell them the required "
+                "MCP server is not connected and guide them to the MCP Tools tab to set it up. "
+                "NEVER pretend to perform these actions."
+            )
+
+        unavailable = []
+        for skill, servers in self._SKILL_MCP_SERVERS.items():
+            if not any(self._mcp_manager.is_connected(s) for s in servers):
+                unavailable.append((skill, servers))
+
+        if not unavailable:
+            # All tool-dependent skills are connected — tell the LLM it can use them
+            available_skills = ", ".join(f"/{s}" for s in self._SKILL_MCP_SERVERS)
+            return (
+                f"\n\n## Tool Status\n"
+                f"All services are connected and working. "
+                f"Available skills: {available_skills}. "
+                f"When the user asks about email, calendar, or browsing, "
+                f"use the corresponding skill to fulfill their request."
+            )
+
+        lines = ["\n\n## Tool Status — IMPORTANT"]
+        lines.append("The following skills require MCP servers that are NOT currently connected:")
+        for skill, servers in unavailable:
+            server_names = " or ".join(f"'{s}'" for s in servers)
+            lines.append(f"- /{skill} (requires {server_names} MCP server)")
+        lines.append(
+            "If the user asks to perform any of these actions, you MUST tell them "
+            "the required service is not connected and guide them to set it up in "
+            "the MCP Tools settings. NEVER claim you performed the action. "
+            "NEVER fabricate results."
+        )
+        return "\n".join(lines)
 
     # Web search prompt helpers — ensure web_search instruction is prominent
     _WEB_HINT_MARKER = "\n\nYou have built-in web search."
@@ -784,6 +873,9 @@ Be conversational, helpful, and reference past context when relevant."""
         # ==================================
         system_content = self._get_system_prompt_cached(user_id=user_id, channel=channel)
 
+        # Inject current date/time so the LLM knows "today"
+        system_content += self._date_context()
+
         # Filter out google-search from skills list when native web search is available
         if self._web_tools:
             system_content = self._filter_web_skill_from_prompt(system_content)
@@ -818,6 +910,12 @@ Be conversational, helpful, and reference past context when relevant."""
         # NOTE: MCP tools are NOT included in prompt
         # Users use skills (/email, /calendar) which call tools internally
         # This keeps the prompt small and fast
+
+        # ==================================
+        # 5.0.1 MCP tool-dependent skill availability check
+        # Tell the LLM which tool-dependent skills are actually usable
+        # ==================================
+        system_content += self._build_tool_availability_hint()
 
         # ==================================
         # 5.1 Auto-skill creation prompt (autonomous skill generation)
@@ -975,6 +1073,34 @@ Be conversational, helpful, and reference past context when relevant."""
                     print(f"Todo command error: {e}")
 
         # ==================================
+        # 7.7a Process track commands if present
+        # ==================================
+        if self._track_handler.has_track_commands(clean_response):
+            print(f"[{channel}] Track command detected, executing...")
+            try:
+                clean_response, track_results = await self._track_handler.execute_commands(
+                    clean_response, user_id=user_id,
+                )
+                if track_results:
+                    print(f"[{channel}] Executed {len(track_results)} track command(s)")
+            except Exception as e:
+                print(f"Track command error: {e}")
+
+        # ==================================
+        # 7.7b Process checklist commands if present
+        # ==================================
+        if self._checklist_handler.has_checklist_commands(clean_response):
+            print(f"[{channel}] Checklist command detected, executing...")
+            try:
+                clean_response, cl_results = await self._checklist_handler.execute_commands(
+                    clean_response, user_id=user_id,
+                )
+                if cl_results:
+                    print(f"[{channel}] Executed {len(cl_results)} checklist command(s)")
+            except Exception as e:
+                print(f"Checklist command error: {e}")
+
+        # ==================================
         # 7.8 Process web_search/web_fetch commands if present (permission-gated)
         # ==================================
         # Intercept /google-search output from LLM and convert to web_search block
@@ -1114,6 +1240,23 @@ Be conversational, helpful, and reference past context when relevant."""
         )
 
         # ==================================
+        # 2.5 Check for direct-execution skills (email, calendar, etc.)
+        # These are executed immediately via MCP without LLM involvement
+        # ==================================
+        is_skill, skill_name, remaining = self.is_skill_invocation(user_message)
+        can_exec = self._skill_executor.can_execute_directly(skill_name) if is_skill else False
+        print(f"[{channel}] Section 2.5: msg='{user_message[:60]}', is_skill={is_skill}, skill='{skill_name}', can_exec={can_exec}")
+        if is_skill and can_exec:
+            print(f"[{channel}] Direct skill execution (stream): {skill_name}")
+            success, result = self._skill_executor.execute(skill_name, remaining)
+            self.session_manager.add_message(
+                session_key, "assistant", result,
+                metadata={"skill": skill_name, "direct_execution": True}
+            )
+            yield result
+            return
+
+        # ==================================
         # 2.1 Pre-search: detect search-worthy queries and fetch results upfront
         # ==================================
         search_context = ""
@@ -1157,6 +1300,9 @@ Be conversational, helpful, and reference past context when relevant."""
         # ==================================
         # Start with system prompt (cached, re-read only on file change)
         system_content = self._get_system_prompt_cached(user_id=user_id, channel=channel)
+
+        # Inject current date/time so the LLM knows "today"
+        system_content += self._date_context()
 
         # Filter out google-search from skills list when native web search is available
         if self._web_tools:
@@ -1357,6 +1503,34 @@ Be conversational, helpful, and reference past context when relevant."""
                         print(f"[{channel}] Executed {len(todo_results)} todo command(s)")
                 except Exception as e:
                     print(f"Todo command error: {e}")
+
+        # ==================================
+        # 7.7a Process track commands if present
+        # ==================================
+        if self._track_handler.has_track_commands(clean_response):
+            print(f"[{channel}] Track command detected, executing...")
+            try:
+                clean_response, track_results = await self._track_handler.execute_commands(
+                    clean_response, user_id=user_id,
+                )
+                if track_results:
+                    print(f"[{channel}] Executed {len(track_results)} track command(s)")
+            except Exception as e:
+                print(f"Track command error: {e}")
+
+        # ==================================
+        # 7.7b Process checklist commands if present
+        # ==================================
+        if self._checklist_handler.has_checklist_commands(clean_response):
+            print(f"[{channel}] Checklist command detected, executing...")
+            try:
+                clean_response, cl_results = await self._checklist_handler.execute_commands(
+                    clean_response, user_id=user_id,
+                )
+                if cl_results:
+                    print(f"[{channel}] Executed {len(cl_results)} checklist command(s)")
+            except Exception as e:
+                print(f"Checklist command error: {e}")
 
         # ==================================
         # 7.8 Process web_search/web_fetch commands if present (permission-gated)

@@ -7,6 +7,7 @@
 import pytest
 from unittest.mock import MagicMock, patch
 from pathlib import Path
+import time
 
 import flet as ft
 from flet import Icons as icons
@@ -351,7 +352,7 @@ class TestSkillForgeAppSmoke:
         # Login screen was added to the page
         assert mock_page.add.called
         # Page title set
-        assert mock_page.title == "SkillForge"
+        assert "SkillForge" in mock_page.title
 
     def test_nav_change_to_each_tab(self, mock_page):
         """Switching to every tab must not crash."""
@@ -420,3 +421,107 @@ class TestSkillForgeAppSmoke:
 
         view.inject_scheduled_message("test reminder")
         mock_page.run_thread.assert_called_once()
+
+
+class TestChatCommandFocus:
+    """Slash-command popup interactions should preserve typing focus."""
+
+    @staticmethod
+    def _build_minimal_view(mock_page, skills_manager):
+        from skillforge.flet.views.chat import ChatView
+
+        view = ChatView.__new__(ChatView)
+        view.page = mock_page
+        view.skills_manager = skills_manager
+        view._suggestions = []
+        view._selected_index = 0
+        view._focus_lock_until = 0.0
+        view.message_input = MagicMock()
+        view.message_input.value = ""
+        view.skills_popup = MagicMock()
+        view.skills_popup.visible = False
+        view.skills_popup.controls = []
+        view.skills_popup_container = MagicMock()
+        view.skills_popup_container.visible = False
+        view._rebuild_popup_items = MagicMock()
+        return view
+
+    def test_slash_popup_schedules_focus_restore(self, mock_page, app_state,
+                                                 skills_manager, session_manager,
+                                                 router, secure_storage):
+        skill = MagicMock()
+        skill.name = "browse"
+        skill.description = "Browse the web"
+        skill.emoji = "🌐"
+        skills_manager.get_user_invocable_skills.return_value = [skill]
+
+        view = self._build_minimal_view(mock_page, skills_manager)
+
+        event = MagicMock()
+        event.control.value = "/"
+        view._on_input_change(event)
+
+        assert view.skills_popup.visible is True
+        mock_page.run_task.assert_called()
+
+    def test_exact_command_keeps_focus_restoration(self, mock_page, app_state,
+                                                   skills_manager, session_manager,
+                                                   router, secure_storage):
+        view = self._build_minimal_view(mock_page, skills_manager)
+
+        first_event = MagicMock()
+        first_event.control.value = "/he"
+        view._on_input_change(first_event)
+        mock_page.run_task.reset_mock()
+
+        exact_event = MagicMock()
+        exact_event.control.value = "/help"
+        view._on_input_change(exact_event)
+
+        assert view.skills_popup.visible is False
+        mock_page.run_task.assert_called()
+
+    def test_tab_selection_schedules_focus_restore(self, mock_page, app_state,
+                                                   skills_manager, session_manager,
+                                                   router, secure_storage):
+        skill = MagicMock()
+        skill.name = "browse"
+        skill.description = "Browse the web"
+        skill.emoji = "🌐"
+        skills_manager.get_user_invocable_skills.return_value = [skill]
+
+        view = self._build_minimal_view(mock_page, skills_manager)
+
+        change_event = MagicMock()
+        change_event.control.value = "/b"
+        view._on_input_change(change_event)
+        mock_page.run_task.reset_mock()
+
+        key_event = MagicMock()
+        key_event.key = "Tab"
+        view._on_keyboard(key_event)
+
+        assert view.message_input.value == "/browse "
+        assert view.skills_popup.visible is False
+        mock_page.run_task.assert_called()
+
+    def test_input_blur_restores_focus_while_typing_command(self, mock_page, app_state,
+                                                            skills_manager, session_manager,
+                                                            router, secure_storage):
+        view = self._build_minimal_view(mock_page, skills_manager)
+        view.message_input.value = "/hel"
+
+        view._on_input_blur(MagicMock())
+
+        mock_page.run_task.assert_called()
+
+    def test_input_blur_restores_focus_after_tab_selected_command(self, mock_page, app_state,
+                                                                  skills_manager, session_manager,
+                                                                  router, secure_storage):
+        view = self._build_minimal_view(mock_page, skills_manager)
+        view.message_input.value = "/browse "
+        view._focus_lock_until = time.monotonic() + 1.0
+
+        view._on_input_blur(MagicMock())
+
+        mock_page.run_task.assert_called()

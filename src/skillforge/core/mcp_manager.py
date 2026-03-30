@@ -88,7 +88,7 @@ class MCPManager:
         else:
             self._project_root = Path(project_root)
         
-        self._config_file = self._project_root / "mcp_config.json"
+        self._config_file = self._project_root / "config" / "mcp_config.json"
         self._auth_manager = auth_manager
         self._pending_installs: Dict[str, Dict[str, Any]] = {}
     
@@ -107,6 +107,7 @@ class MCPManager:
     def _save_config(self, config: Dict[str, Any]) -> bool:
         """Save MCP configuration to file"""
         try:
+            self._config_file.parent.mkdir(parents=True, exist_ok=True)
             with open(self._config_file, 'w') as f:
                 json.dump(config, f, indent=2)
             return True

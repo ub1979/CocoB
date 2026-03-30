@@ -19,7 +19,7 @@ Post content and browse feeds on Twitter/X and LinkedIn. Supports two modes: Com
 - Playwright or browse MCP server connected
 - Browser-based interaction — slower but works without API keys
 
-If neither is available, reply: "Social media features require either the Composio MCP server (for API access) or Playwright MCP (for browser access). Ask your admin to set one up."
+Check the "Tool Status" section in your system prompt to see if these services are available before proceeding.
 
 ## Operations
 

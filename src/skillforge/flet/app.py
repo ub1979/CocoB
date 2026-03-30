@@ -167,7 +167,12 @@ class SkillForgeApp:
             print(f"[Startup] Using provider: {active_provider}"
                   + (" (saved)" if saved_provider else " (default)"))
 
-            llm_config = config.LLM_PROVIDERS[active_provider]
+            llm_config = config.LLM_PROVIDERS[active_provider].copy()
+            # Restore saved model only if the saved provider matches what we're using
+            saved_model = secure_storage.get_setting('current_model')
+            if saved_model and active_provider == saved_provider:
+                llm_config["model"] = saved_model
+                print(f"[Startup] Using saved model: {saved_model}")
             llm_provider = LLMProviderFactory.from_dict(llm_config)
             self.router = MessageRouter(self.session_manager, llm_provider)
 
@@ -192,13 +197,48 @@ class SkillForgeApp:
                     self.router.set_mcp_manager(self.mcp_manager)
 
                     def _auto_connect_mcp():
+                        log_lines = []
                         try:
+                            log_lines.append("[MCP] Starting auto-connect...")
                             self.mcp_manager.connect_all_sync(timeout=120.0)
-                            connected = [n for n, c in self.mcp_manager.get_server_configs().items() if c.enabled]
-                            if connected:
-                                print(f"[MCP] Auto-connected: {', '.join(connected)}")
+                            # Report per-server status
+                            connected_names = []
+                            failed_names = []
+                            for name, cfg in self.mcp_manager.get_server_configs().items():
+                                if cfg.enabled:
+                                    if self.mcp_manager.is_connected(name):
+                                        connected_names.append(name)
+                                        log_lines.append(f"[MCP] {name}: connected")
+                                    else:
+                                        failed_names.append(name)
+                                        log_lines.append(f"[MCP] {name}: FAILED to connect")
+                            # Show UI notification for failures
+                            if failed_names:
+                                try:
+                                    msg = f"MCP: {', '.join(failed_names)} failed to connect"
+                                    snackbar = ft.SnackBar(
+                                        content=ft.Text(msg, color="#FFFFFF"),
+                                        bgcolor="#EA580C", open=True,
+                                        duration=5000,
+                                    )
+                                    self.page.overlay.append(snackbar)
+                                    self.page.update()
+                                except Exception:
+                                    pass
+                            if connected_names:
+                                log_lines.append(f"[MCP] Successfully connected: {', '.join(connected_names)}")
                         except Exception as e:
-                            print(f"[MCP] Auto-connect error: {e}")
+                            log_lines.append(f"[MCP] Auto-connect error: {type(e).__name__}: {e}")
+                            import traceback
+                            log_lines.append(traceback.format_exc())
+                        # Write log for diagnostics
+                        for line in log_lines:
+                            print(line)
+                        try:
+                            log_path = Path(PROJECT_ROOT) / "data" / "mcp_connect.log"
+                            log_path.write_text("\n".join(log_lines) + "\n")
+                        except Exception:
+                            pass
                     threading.Thread(target=_auto_connect_mcp, daemon=True).start()
                 except Exception as mcp_err:
                     print(f"MCP initialization skipped: {mcp_err}")
@@ -539,6 +579,8 @@ def main(page: ft.Page):
 
     def on_authenticated(username):
         """Called after successful login — show the main app."""
+        # Save session so we don't ask again next time
+        secure_storage.set_setting('session_user', username)
         page.controls.clear()
         app = SkillForgeApp(page, admin_username=username)
 
@@ -551,9 +593,15 @@ def main(page: ft.Page):
         page.on_window_event = on_window_event
         _auto_start_bots(app)
 
-    # Show login gate
-    login_view = LoginView(page, secure_storage, on_authenticated)
-    page.add(login_view.build())
+    # Auto-login if we have a saved session
+    saved_user = secure_storage.get_setting('session_user')
+    print(f"[startup] saved_user={saved_user}, has_admin={secure_storage.has_admin()}")
+    if saved_user and secure_storage.has_admin():
+        print(f"[startup] Auto-login as: {saved_user}")
+        on_authenticated(saved_user)
+    else:
+        login_view = LoginView(page, secure_storage, on_authenticated)
+        page.add(login_view.build())
 
 
 if __name__ == "__main__":

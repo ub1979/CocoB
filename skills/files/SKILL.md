@@ -12,7 +12,7 @@ Browse and manage local files through chat. Uses the Filesystem MCP server for a
 ## Prerequisites
 
 - Filesystem MCP server connected with appropriate directories in allowed paths
-- If Filesystem MCP is not available, reply: "File management requires the Filesystem MCP server. Ask your admin to set it up with your allowed directories."
+- Check the "Tool Status" section in your system prompt to see if this service is available before proceeding.
 
 ## Operations
 

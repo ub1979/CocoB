@@ -125,6 +125,10 @@ class MCPPanel:
             icon_size=20, tooltip="Connect" if not is_connected else "Disconnect",
             on_click=lambda e, n=name, c=is_connected: self._toggle_mcp_connection(n, c),
         )
+        config_btn = ft.IconButton(
+            icon=icons.SETTINGS, icon_color=AppColors.TEXT_SECONDARY, icon_size=18,
+            tooltip="Configure", on_click=lambda e, n=name: self._configure_mcp_server(n),
+        )
         delete_btn = ft.IconButton(
             icon=icons.DELETE, icon_color=AppColors.ERROR, icon_size=18,
             tooltip="Remove server", on_click=lambda e, n=name: self._delete_mcp_server(n),
@@ -154,7 +158,7 @@ class MCPPanel:
                 padding=ft.Padding.only(top=4, left=32),
             ),
             ft.Container(
-                content=ft.Row([ft.Container(expand=True), connect_btn, delete_btn], spacing=0),
+                content=ft.Row([ft.Container(expand=True), connect_btn, config_btn, delete_btn], spacing=0),
                 padding=ft.Padding.only(top=4),
             ),
             ft.Container(
@@ -231,6 +235,9 @@ class MCPPanel:
                                   border_color=AppColors.BORDER, color=AppColors.TEXT_PRIMARY, bgcolor=AppColors.SURFACE)
         url_field = ft.TextField(label="URL (for SSE/HTTP)", hint_text="http://localhost:8080/mcp",
                                  border_color=AppColors.BORDER, color=AppColors.TEXT_PRIMARY, bgcolor=AppColors.SURFACE, visible=False)
+        env_field = ft.TextField(label="Environment Variables (JSON)", hint_text='{"API_KEY": "your_key"}',
+                                 border_color=AppColors.BORDER, color=AppColors.TEXT_PRIMARY, bgcolor=AppColors.SURFACE,
+                                 multiline=True, min_lines=2, max_lines=4)
 
         def on_type_change(e):
             is_remote = type_dropdown.value in ("sse", "http")
@@ -268,6 +275,12 @@ class MCPPanel:
                     self._show_snackbar("Please enter a URL", error=True)
                     return
                 config_dict["url"] = url_field.value.strip()
+            if env_field.value and env_field.value.strip():
+                try:
+                    config_dict["env"] = json.loads(env_field.value)
+                except json.JSONDecodeError:
+                    self._show_snackbar("Invalid JSON for environment variables", error=True)
+                    return
             try:
                 from skillforge.ui.settings.mcp_models import MCPServerConfig
                 server_config = MCPServerConfig.from_dict(name, config_dict)
@@ -283,10 +296,106 @@ class MCPPanel:
 
         dialog = ft.AlertDialog(
             modal=True, title=ft.Text("Add MCP Server", color=AppColors.TEXT_PRIMARY),
-            content=ft.Column([name_field, type_dropdown, command_field, args_field, url_field],
+            content=ft.Column([name_field, type_dropdown, command_field, args_field, url_field, env_field],
                              tight=True, spacing=16, width=500),
             actions=[ft.TextButton("Cancel", on_click=close_dialog), StyledButton("Add Server", on_click=add_server)],
             actions_alignment=ft.MainAxisAlignment.END, bgcolor=AppColors.SURFACE,
+        )
+        self.page.overlay.append(dialog)
+        dialog.open = True
+        self.page.update()
+
+    def _configure_mcp_server(self, server_name):
+        """Open dialog to edit env vars / enable/disable a server."""
+        if not self.mcp_manager:
+            return
+
+        configs = self.mcp_manager.get_server_configs()
+        cfg = configs.get(server_name)
+        if not cfg:
+            self._show_snackbar(f"Server '{server_name}' not found", error=True)
+            return
+
+        # Get current env vars and enabled state from the raw config
+        raw = {}
+        try:
+            import pathlib
+            config_path = self.mcp_manager.config_file
+            with open(config_path) as f:
+                raw = json.load(f)
+        except Exception:
+            pass
+
+        server_raw = raw.get("mcpServers", {}).get(server_name, {})
+        current_env = server_raw.get("env", {})
+        is_enabled = server_raw.get("enabled", True)
+        setup_hint = server_raw.get("_setup", "")
+
+        # Build env fields — one TextField per key
+        env_fields = []
+        env_refs = {}
+        for key, val in current_env.items():
+            tf = ft.TextField(
+                label=key, value=str(val) if val else "",
+                border_color=AppColors.BORDER, color=AppColors.TEXT_PRIMARY,
+                bgcolor=AppColors.SURFACE, password=("secret" in key.lower() or "key" in key.lower() or "token" in key.lower()),
+                can_reveal_password=True,
+            )
+            env_fields.append(tf)
+            env_refs[key] = tf
+
+        enabled_switch = ft.Switch(label="Enabled", value=is_enabled,
+                                   active_color=AppColors.SUCCESS)
+
+        content_controls = [enabled_switch, ft.Divider(height=1, color=AppColors.BORDER)]
+        if setup_hint:
+            content_controls.append(ft.Text(setup_hint, size=11, color=AppColors.TEXT_SECONDARY, selectable=True))
+            content_controls.append(ft.Container(height=4))
+        if env_fields:
+            content_controls.append(ft.Text("Environment Variables", size=13, weight=ft.FontWeight.W_600,
+                                            color=AppColors.TEXT_PRIMARY))
+            content_controls.extend(env_fields)
+        else:
+            content_controls.append(ft.Text("No environment variables configured.", size=12,
+                                            color=AppColors.TEXT_MUTED))
+
+        def close_dialog(e):
+            dialog.open = False
+            self.page.update()
+
+        def save_config(e):
+            try:
+                config_path = self.mcp_manager.config_file
+                with open(config_path) as f:
+                    full_config = json.load(f)
+
+                srv = full_config.get("mcpServers", {}).get(server_name, {})
+                srv["enabled"] = enabled_switch.value
+                for key, tf in env_refs.items():
+                    srv.setdefault("env", {})[key] = tf.value or ""
+                full_config.setdefault("mcpServers", {})[server_name] = srv
+
+                with open(config_path, "w") as f:
+                    json.dump(full_config, f, indent=2)
+
+                # Reload config
+                self.mcp_manager.load_config()
+                self._populate_mcp_servers()
+                self._show_snackbar(f"Saved {server_name} configuration")
+                dialog.open = False
+            except Exception as ex:
+                self._show_snackbar(f"Error saving: {ex}", error=True)
+            self.page.update()
+
+        dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text(f"Configure: {server_name}", color=AppColors.TEXT_PRIMARY),
+            content=ft.Column(content_controls, tight=True, spacing=12, width=500,
+                              scroll=ft.ScrollMode.AUTO),
+            actions=[ft.TextButton("Cancel", on_click=close_dialog),
+                     StyledButton("Save", on_click=save_config)],
+            actions_alignment=ft.MainAxisAlignment.END,
+            bgcolor=AppColors.SURFACE,
         )
         self.page.overlay.append(dialog)
         dialog.open = True

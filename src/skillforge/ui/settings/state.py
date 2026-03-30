@@ -139,9 +139,14 @@ class AppState:
             # Save provider to secure storage (for Telegram sync)
             # ==================================
             try:
-                from skillforge import secure_storage
+                from skillforge.flet.storage import secure_storage
                 secure_storage.set_setting('current_provider', provider_name)
-            except:
+                # Also save the model name for providers with model selection
+                if custom_config and custom_config.get("model"):
+                    secure_storage.set_setting('current_model', custom_config["model"])
+                else:
+                    secure_storage.set_setting('current_model', None)
+            except Exception:
                 pass  # Non-critical
 
             # ==================================

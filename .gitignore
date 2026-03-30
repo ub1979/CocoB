@@ -27,6 +27,7 @@ wheels/
 
 # Configuration with secrets (use config.example.py as template)
 config.py
+config/mcp_config.json
 
 # Environment variables
 .env

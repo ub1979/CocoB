@@ -62,6 +62,7 @@ class TestListServers:
                 }
             }
             
+            manager._config_file.parent.mkdir(parents=True, exist_ok=True)
             with open(manager._config_file, 'w') as f:
                 json.dump(config, f)
             
@@ -100,6 +101,7 @@ class TestListServers:
                 }
             }
             
+            manager._config_file.parent.mkdir(parents=True, exist_ok=True)
             with open(manager._config_file, 'w') as f:
                 json.dump(config, f)
             
@@ -130,6 +132,7 @@ class TestEnableDisable:
                 }
             }
             
+            manager._config_file.parent.mkdir(parents=True, exist_ok=True)
             with open(manager._config_file, 'w') as f:
                 json.dump(config, f)
             
@@ -160,6 +163,7 @@ class TestEnableDisable:
                 }
             }
             
+            manager._config_file.parent.mkdir(parents=True, exist_ok=True)
             with open(manager._config_file, 'w') as f:
                 json.dump(config, f)
             
@@ -232,6 +236,7 @@ class TestInstallVerified:
                 }
             }
             
+            manager._config_file.parent.mkdir(parents=True, exist_ok=True)
             with open(manager._config_file, 'w') as f:
                 json.dump(config, f)
             
@@ -388,6 +393,7 @@ class TestUninstall:
                 }
             }
             
+            manager._config_file.parent.mkdir(parents=True, exist_ok=True)
             with open(manager._config_file, 'w') as f:
                 json.dump(config, f)
             

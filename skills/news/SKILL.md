@@ -12,7 +12,7 @@ Fetch headlines, read articles, and search news by topic using RSS feeds. Uses P
 ## Prerequisites
 
 - Playwright or browse MCP server connected for fetching web content
-- If no browse MCP is available, reply: "News fetching requires the Playwright or browse MCP server. Ask your admin to set it up."
+- Check the "Tool Status" section in your system prompt to see if this service is available before proceeding.
 
 ## Default RSS Feeds
 

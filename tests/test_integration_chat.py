@@ -760,6 +760,8 @@ class TestMCPServerManagement:
         """Create a router with an isolated MCP manager."""
         llm = _make_mock_llm("ollama", "gemma3:1b")
         router = make_router(llm)
+        # Ensure config subdirectory exists (MCPManager expects config/mcp_config.json)
+        (tmp_path / "config").mkdir(exist_ok=True)
         # Point MCP manager to temp directory so it doesn't touch real config
         from skillforge.core.mcp_manager import MCPManager as MCPServerManager
         router._mcp_server_manager = MCPServerManager(
@@ -843,7 +845,7 @@ class TestMCPServerManagement:
 
         # Get the server name from the list
         import json
-        config = json.loads((tmp_path / "mcp_config.json").read_text())
+        config = json.loads((tmp_path / "config" / "mcp_config.json").read_text())
         server_name = list(config["mcpServers"].keys())[0]
 
         # Disable
@@ -863,7 +865,7 @@ class TestMCPServerManagement:
         router.handle_command("/mcp confirm", "ui:direct:user1")
 
         import json
-        config = json.loads((tmp_path / "mcp_config.json").read_text())
+        config = json.loads((tmp_path / "config" / "mcp_config.json").read_text())
         server_name = list(config["mcpServers"].keys())[0]
 
         # Uninstall
@@ -918,7 +920,7 @@ class TestDirectSkillExecution:
         # No MCP manager set — skill_executor._mcp_manager is None
         success, result = router._skill_executor.execute("email", "send hello to bob")
         assert success is False
-        assert "not available" in result.lower() or "not connected" in result.lower() or "not initialized" in result.lower()
+        assert "not available" in result.lower() or "not connected" in result.lower() or "not initialized" in result.lower() or "not configured" in result.lower()
 
     async def test_direct_skill_with_mcp_calls_tool(self, make_router):
         """Direct skill with MCP manager invokes the tool."""
